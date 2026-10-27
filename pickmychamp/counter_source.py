@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from functools import lru_cache
+import json
 import re
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -8,6 +9,7 @@ from urllib.request import Request, urlopen
 
 PAGE_LIMIT = 500_000
 SOURCE_ROOT = "https://u.gg/lol/champions"
+OPGG_MCP_URL = "https://mcp-api.op.gg/mcp"
 ROLE_NAMES = {
     "ADC": "adc",
     "BOT": "adc",
@@ -135,6 +137,86 @@ def curated_fallback(enemy: str, role: str | None, url: str) -> dict | None:
     }
 
 
+def opgg_matchup_counters(enemy: str, role: str) -> dict:
+        champion = re.sub(r"[^A-Za-z0-9]+", "_", enemy).strip("_").upper()
+        init_body = json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2025-03-26",
+                    "capabilities": {},
+                    "clientInfo": {"name": "PickMyChamp", "version": "1.0"},
+                },
+            }
+        ).encode()
+        init_request = Request(
+            OPGG_MCP_URL,
+            data=init_body,
+            headers={"Accept": "application/json, text/event-stream", "Content-Type": "application/json"},
+        )
+        with urlopen(init_request, timeout=15) as response:
+            session_id = response.headers.get("Mcp-Session-Id")
+        if not session_id:
+            raise RuntimeError("OP.GG did not return a session.")
+
+        fields = [
+            "champion",
+            "position",
+            "data.weak_counters[].{champion_name,counter_win_rate,my_win_rate,play,win_rate}",
+        ]
+        call_body = json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "tools/call",
+                "params": {
+                    "name": "lol_get_champion_analysis",
+                    "arguments": {
+                        "game_mode": "ranked",
+                        "champion": champion,
+                        "position": ROLE_NAMES.get(role.upper(), "adc"),
+                        "desired_output_fields": fields,
+                    },
+                },
+            }
+        ).encode()
+        call_request = Request(
+            OPGG_MCP_URL,
+            data=call_body,
+            headers={
+                "Accept": "application/json, text/event-stream",
+                "Content-Type": "application/json",
+                "Mcp-Session-Id": session_id,
+            },
+        )
+        with urlopen(call_request, timeout=20) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        text = payload["result"]["content"][0]["text"]
+        entries = re.findall(
+            r'WeakCounter\("([^"]+)",(\d+),([0-9.]+),([0-9.]+),([0-9.]+)\)',
+            text,
+        )
+        if not entries:
+            raise ValueError(f"OP.GG returned no counter data for {enemy}.")
+        return {
+            "enemy": enemy,
+            "enemy_role": ROLE_NAMES.get(role.upper()),
+            "patch": "current",
+            "scope": "OP.GG ranked",
+            "source_url": f"https://op.gg/lol/champions/{enemy.lower()}/build",
+            "source": "OP.GG",
+            "picks": [
+                {
+                    "champion": name,
+                    "slug": re.sub(r"[^a-z0-9]+", "", name.casefold()),
+                    "win_rate": float(counter_win_rate) * 100,
+                    "games": int(play),
+                }
+                for name, play, _my_win_rate, counter_win_rate, _win_rate in entries[:3]
+            ],
+        }
 @lru_cache(maxsize=64)
 def matchup_counters(enemy: str, role: str | None = None) -> dict:
     normalized = enemy.strip()
@@ -167,8 +249,13 @@ def matchup_counters(enemy: str, role: str | None = None) -> dict:
                 raise RuntimeError(f"U.GG returned HTTP {response.status}.")
             page = response.read(PAGE_LIMIT).decode("utf-8", "replace")
     except HTTPError as exc:
-        fallback = curated_fallback(normalized, role, url)
         if exc.code == 403:
+            try:
+                return opgg_matchup_counters(normalized, role or "adc")
+            except (HTTPError, URLError, TimeoutError, KeyError, ValueError, json.JSONDecodeError):
+                pass
+        fallback = curated_fallback(normalized, role, url)
+        if exc.code == 403 and fallback:
             return fallback
         raise RuntimeError(f"U.GG returned HTTP {exc.code} for {normalized}.") from exc
     except (URLError, TimeoutError) as exc:
