@@ -22,7 +22,7 @@ button { cursor: pointer; }
 .sidebar { background: var(--sidebar); border-right: 1px solid #22242e; bottom: 0; display: flex; flex-direction: column; left: 0; padding: 26px 18px 22px; position: fixed; top: 0; width: 244px; z-index: 3; }
 .brand { align-items: center; color: var(--text); display: flex; font: 700 17px 'Space Grotesk', sans-serif; gap: 11px; letter-spacing: -.5px; text-decoration: none; }
 .brand-mark { align-items: center; background: linear-gradient(145deg, #efd69b, #b9975e); border-radius: 9px 9px 9px 3px; color: #20202a; display: flex; font-size: 19px; height: 36px; justify-content: center; width: 36px; }
-.brand-accent { color: var(--gold); }.brand small { color: #686b7a; display: block; font: 600 8px 'DM Sans', sans-serif; letter-spacing: 1.65px; margin-top: 2px; }
+.brand-accent { color: var(--gold); }.brand small { color: #686b7a; display: block; font: 600 8px 'DM Sans', sans-serif; letter-spacing: 1.65px; margin-top: 2px; }.brand-signature { color: var(--gold); font-size: 9px; letter-spacing: .4px; margin-left: auto; writing-mode: vertical-rl; }
 .nav-label, .section-kicker, .field>span { color: #858899; font-size: 10px; font-weight: 700; letter-spacing: 1.35px; }
 .nav-label { margin: 54px 0 12px 10px; }
 .nav-link { align-items: center; background: transparent; border: 0; border-radius: 7px; color: #a4a6b3; display: flex; font-size: 13px; gap: 12px; margin-bottom: 5px; padding: 12px 11px; text-align: left; transition: .18s ease; width: 100%; }
@@ -32,7 +32,7 @@ button { cursor: pointer; }
 .status-dot, .live-pill i { background: var(--teal); border-radius: 50%; box-shadow: 0 0 9px #71d5bd80; display: inline-block; height: 7px; width: 7px; }
 .sidebar-bottom p { color: #727584; font-size: 10px; line-height: 1.7; margin: 12px 0 22px; max-width: 180px; }.version-label { color: #555866; font-size: 9px; font-weight: 700; letter-spacing: 1.2px; }
 .main-content { margin-left: 244px; max-width: 1600px; min-height: 100vh; padding: 0 54px; }
-.topbar { align-items: center; border-bottom: 1px solid #242631; display: flex; height: 64px; justify-content: space-between; }
+.topbar { align-items: center; border-bottom: 1px solid #242631; display: flex; height: 64px; justify-content: space-between; }.topbar-signature { color: #b9975e; font-size: 10px; font-weight: 700; letter-spacing: .6px; }
 .breadcrumb { align-items: center; color: #747786; display: flex; font-size: 9px; font-weight: 700; gap: 11px; letter-spacing: 1.1px; }.breadcrumb b { color: #444754; }.breadcrumb strong { color: #d5d4db; }
 .patch-chip { align-items: center; background: #191b24; border: 1px solid #2a2d38; border-radius: 20px; color: #858797; display: flex; font-size: 9px; gap: 8px; letter-spacing: .75px; padding: 7px 11px; }.patch-chip .status-dot { height: 6px; width: 6px; }.patch-chip b { color: #dad8df; font-size: 9px; }
 .page { animation: rise .24s ease both; padding-top: 43px; }.page[hidden], [hidden] { display: none !important; }
