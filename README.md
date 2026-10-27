@@ -1,23 +1,151 @@
 # PickMyChamp
+
+---
+title: PickMyChamp
+emoji: 🎮
+colorFrom: blue
+colorTo: purple
+sdk: docker
+app_port: 7860
+---
+
 Do you ever dodge queue or pick Vayne mid because because you don't know who else to play? PickMyChamp is a solution to all your problems: a utility to generate the best choice of champion in a game of League of Legends (LoL).
+
+## Assistant CLI (new)
+
+The original scraper and script remain in `python/` for reference. The new
+`main.py` CLI uses Riot's official API for account lookup, recent match history,
+and champion mastery. It does not depend on OP.GG or LoLCounter.
+
+Requirements: Python 3.10+ and a Riot API key for personal account statistics. Create a key at
+[developer.riotgames.com](https://developer.riotgames.com/) and set it in the
+`RIOT_API_KEY` environment variable; do not put the key in source code or commit
+it. For example, in PowerShell:
+
+```powershell
+$env:RIOT_API_KEY = "your-key"
+python main.py
+```
+
+This opens the local visual interface in your browser. The app binds only to
+`127.0.0.1`; keep its terminal open while using it and press Ctrl+C to stop.
+The enemy champion is selected from a dropdown populated with the current
+English champion names from Riot Data Dragon; changing the selection refreshes
+the result. Matchup picks, win rates, and sample sizes are read from U.GG's
+public counter page for that champion. Rune, item, and summoner-spell names
+use English. The app/profile works without a Riot API key; the key is only
+needed for personal Riot match-history features in the CLI.
+
+The original commands remain available, for example
+`python main.py history --count 50` or `python main.py counter --enemy Vayne
+--role adc`. `python main.py demo` shows synthetic examples that are not real
+player or matchup data.
+
+`setup` stores the Riot ID, region, roles, mastered champions, and play-style
+preferences in `~/.pickmychamp/config.json`. Riot ID is entered interactively
+and is not embedded in the program; the initial region prompt defaults to
+`euw`. Draft/history need an API key and network access. The API key is not
+stored in the profile.
+
+`history` and `draft` accept `--count` from 1 to 100 (20 by default). Draft can
+filter matches with `--queue ranked`, `--queue flex`, or `--queue normal`;
+without it, all returned queues are combined. If `--role` is omitted, the
+configured primary role is used.
+Role-specific personal records are shown alongside each suggestion. The
+profile score is a heuristic combining a smoothed personal win rate (65%),
+KDA (15%), Riot mastery or a declared mastery preference (10%), and recent
+role-specific experience (10%). The displayed confidence index is also a
+heuristic based on sample size, not a probability.
+The opponent argument is context only: Riot's official API does not provide
+current-patch lane matchup win rates, team-synergy rankings, recommended runes,
+skill orders, or optimal builds. Those claims are therefore not fabricated;
+recommendations may be fewer than three if the player has insufficient
+role-specific data and has not configured enough mastered champions. Match
+statistics are not filtered to the current patch. Even with `--count 100`,
+this is still a recent-history sample, not the player's lifetime record.
+
+`counter` and the visual draft view both query U.GG's public champion counter
+pages. The app requests the selected lane, uses the page's default World
+Emerald+ view, win-rate sample, and patch, and caches recently viewed
+champion/lane combinations in memory. Changing either the enemy champion or
+the role refreshes the recommendations. The source HTML is bounded to 500 KB
+per request. U.GG pages can change, so failed parsing/network access produces
+an explicit error. The stats describe the source's population, not your
+personal performance; if U.GG returns a different lane than requested, the
+app warns that the picks may not fit your lane.
+
+Rune, spell, skill-order, and item build recommendations are not available
+from the matchup counter table for most champions. The app links to each
+recommended champion's English U.GG build page instead of inventing those
+details. The existing hand-authored detailed matchup guide supplements the
+small set of recommendations covered by the local guide; other champions use
+the linked English build page and clearly report the missing details.
+
+`build` requires the League client to be open and a live match to be running.
+It reads the authenticated local League Client API and Live Client Data
+interface on loopback. `LEAGUE_CLIENT_LOCKFILE` can point to the client's
+`lockfile` if it is installed outside the standard Windows paths. Client data
+is a snapshot and can be unavailable during loading or outside a match. The
+command reports only facts exposed by the client; it currently does not make
+future item recommendations because the official APIs do not provide
+item-performance evidence for the current matchup.
+
+Riot API access is rate-limited and may not expose all historical data. Recent
+match statistics are not lifetime/global statistics. OP.GG is not scraped, and
+public profile availability is not assumed.
+
+Run the local tests with:
+
+```powershell
+python -m unittest discover -s tests
+```
+
+### Public deployment 100% gratuit avec Hugging Face Spaces
+
+Le projet est prêt pour un **Docker Space** Hugging Face. Le plan gratuit
+convient à une démo publique et ne nécessite ni carte bancaire ni serveur
+payant. Le Space peut s'endormir après une période d'inactivité : le premier
+chargement suivant peut donc être plus lent.
+
+1. Crée un dépôt GitHub vide nommé `PickMyChamp` dans le compte
+   `zakarialakhsim2`, puis pousse le projet.
+2. Sur [Hugging Face](https://huggingface.co/), crée un Space public avec
+   `SDK: Docker`.
+3. Dans **Files**, importe le contenu du dépôt, ou connecte le dépôt GitHub
+   via l'intégration disponible dans ton compte.
+4. Le `Dockerfile` expose le port `7860`; le Space démarre automatiquement
+   `python main.py app`.
+5. Attends la construction de l'image puis ouvre l'URL publique du Space.
+
+Cette version publique utilise les données de champions Data Dragon et les
+pages publiques U.GG. Les fonctions personnelles Riot (`setup`, `history` et
+`draft`) nécessitent une clé `RIOT_API_KEY`; ne l'ajoute jamais au dépôt.
+Pour une clé dans un Space, utilise un **Secret** Hugging Face plutôt qu'une
+variable publique. La persistance du profil local n'est pas garantie sur le
+stockage éphémère gratuit.
+
+#### Limites et coûts
+
+- Hugging Face Spaces gratuit : ressources partagées et mise en veille
+  possible; ce n'est pas un SLA de production.
+- Le plan reste à 0 € tant que tu n'ajoutes pas de matériel ou de service
+  payant.
+- Riot API et U.GG peuvent appliquer leurs propres limites et modifier leurs
+  pages; l'application affiche explicitement les erreurs réseau.
 
 ![Project Sample](images/SampleOutput.png)
 
-## Installing
+## Legacy prototype
 
-Clone the repository to your computer 
-
-```
-git clone git://github.com/vsb321/PickMyChamp
-```
-
-In the directory, execute
-
-```
-python PickMyChamp.py
-```
+The original single-script prototype is still in `python/`, but its scraping
+sources and page assumptions may no longer work. Use the `main.py` assistant
+above for current development.
 
 ## How does it work?
+
+The following describes the retired scraper prototype in `python/`, not the
+current `main.py` assistant. Its OP.GG/LoLCounter scraping and regression model
+are kept for historical reference only.
 
 This project can be broken down into 3 components:
    1. Collecting and manipulating user input
@@ -90,12 +218,11 @@ This project can be broken down into 3 components:
 ![Graph](images/KDAVsWR.png)
         - When I had generated a prediction of weights for each champion using user-specific stats, I also had to take counter picks into account. If the opponent was strong against a champion in the user's pool, that champion's corresponding weight was multipled by ```0.75```. As you can guess, If the opponent was weak against a champion, the weight was multiplied by ```1.25```. 
         - Sorting the array of weights in descending order, the *champions with the top three highest weights* were returned and printed!
-## FAQ
+## Historical FAQ (original prototype)
 
-- **How do I generate a champion for a *specific* lane?**
-    - As of yet, this feature is not supported. Check back for future updates!
-- **Will this utility be supported on a mobile platform or website?**
-    - I am currently in the process of making http://pickmychampion.com! Expect it in the near future.
+- **Can I choose a lane?**
+    - The original prototype did not support lanes. The current CLI supports
+      `--role top`, `jungle`, `mid`, `adc`, or `support`.
 - **How can I support PickMyChamp?**
     - Spreading the word or generating test cases is more than enough! I'm always looking for feedback, so please reach out to me with advice or ideas for future capabilities.
 

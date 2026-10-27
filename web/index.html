@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#11131b">
+  <title>PickMyChamp — Draft Assistant</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#" aria-label="PickMyChamp accueil">
+        <span class="brand-mark">P</span>
+        <span>PickMy<span class="brand-accent">Champ</span><small>LEAGUE COMPANION</small></span>
+      </a>
+      <div class="nav-label">PLAYER SPACE</div>
+      <button class="nav-link active" data-page="draft"><span class="nav-icon">◇</span> Draft assistant</button>
+      <button class="nav-link" data-page="profile"><span class="nav-icon">◎</span> My profile</button>
+      <div class="sidebar-bottom">
+        <div class="sidebar-status"><span class="status-dot"></span><span id="profile-status">Local profile</span></div>
+        <p>Strategic advice does not replace matchup statistics.</p>
+        <span class="version-label">PICKMYCHAMP · BETA</span>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="breadcrumb"><span>PLAYER SPACE</span><b>/</b><strong id="breadcrumb-current">DRAFT ASSISTANT</strong></div>
+        <div class="patch-chip"><span class="status-dot"></span> DATA DRAGON <b id="patch-label">LOADING PATCH</b></div>
+      </header>
+
+      <section id="draft-page" class="page active">
+        <div class="hero">
+          <div class="hero-copy">
+            <div class="eyebrow"><span class="eyebrow-line"></span> PREPARE YOUR NEXT GAME</div>
+            <h1>Choose your <span>matchup.</span></h1>
+            <p>Champion, rune and lane ideas to enter the Rift with a plan.</p>
+          </div>
+          <div class="hero-rank"><span class="rank-sigil">✦</span><span>YOUR DUO<br><b>YOUR NEXT WIN</b></span></div>
+        </div>
+
+        <section class="draft-panel panel">
+          <div class="panel-heading">
+            <div><span class="section-kicker">01 — CONFIGURE YOUR LANE</span><h2>Who are you facing?</h2></div>
+            <span class="live-pill"><i></i> DRAFT ADVICE</span>
+          </div>
+          <form id="counter-form" class="draft-form">
+            <label class="field"><span>ROLE</span>
+              <select id="draft-role">
+                <option value="adc" selected>ADC / Bot</option>
+                <option value="support">Support</option>
+                <option value="top">Top</option>
+                <option value="jungle">Jungle</option>
+                <option value="mid">Mid</option>
+              </select>
+            </label>
+            <label class="field enemy-field"><span>ENEMY CHAMPION</span>
+              <select id="enemy-champion" required disabled>
+                <option value="">Loading champions…</option>
+              </select>
+            </label>
+            <button class="primary-button" type="submit"><span>Show my options</span><b>→</b></button>
+          </form>
+          <div class="form-footnote"><span>ⓘ</span> Results refresh when you change the champion or role.</div>
+        </section>
+
+        <div id="error-message" class="error-banner" role="alert" hidden></div>
+        <div id="loading-message" class="loading-banner" hidden><span class="spinner"></span> Loading current patch data…</div>
+        <section id="results-section" hidden>
+          <div class="results-heading">
+            <div><span class="section-kicker">02 — YOUR OPTIONS</span><h2>Answers to <span id="enemy-label">Vayne</span></h2></div>
+            <span class="result-meta">Tactical options <i>·</i> <b id="result-patch">patch</b></span>
+          </div>
+          <div id="recommendation-list" class="recommendation-list"></div>
+          <div class="disclaimer"><span>ⓘ</span><p><b>Matchup source</b> — Public matchup statistics and sample sizes come from U.GG. Build details are shown only when available; otherwise use the linked English build guide.</p></div>
+        </section>
+      </section>
+
+      <section id="profile-page" class="page" hidden>
+        <div class="hero profile-hero">
+          <div class="hero-copy">
+            <div class="eyebrow"><span class="eyebrow-line"></span> YOUR PERSONAL SPACE</div>
+            <h1>Your <span>player profile.</span></h1>
+            <p>Keep your preferences at hand. They are saved only on this computer.</p>
+          </div>
+          <div class="profile-avatar">ADC</div>
+        </div>
+        <section class="profile-panel panel">
+          <div class="panel-heading">
+            <div><span class="section-kicker">LOCAL CONFIGURATION</span><h2>My preferences</h2></div>
+            <span class="privacy-chip">⌑ STORED ON THIS DEVICE</span>
+          </div>
+          <form id="profile-form" class="profile-form">
+            <div class="profile-grid">
+              <label class="field"><span>RIOT ID</span><input id="riot-id" placeholder="Nom#TAG"></label>
+              <label class="field"><span>REGION</span>
+                <select id="profile-region">
+                  <option value="euw">Europe West (EUW)</option><option value="eune">Europe Nordic & East</option>
+                  <option value="na">North America</option><option value="kr">Korea</option>
+                  <option value="br">Brazil</option><option value="jp">Japan</option>
+                  <option value="oce">Oceania</option><option value="tr">Türkiye</option>
+                  <option value="ru">Russia</option><option value="lan">LAS/LAN</option>
+                  <option value="las">Latin America South</option><option value="ph">Philippines</option>
+                  <option value="sg">Singapore</option><option value="th">Thailand</option>
+                  <option value="tw">Taiwan</option><option value="vn">Vietnam</option>
+                </select>
+              </label>
+              <label class="field"><span>PRIMARY ROLE</span>
+                <select id="primary-role">
+                  <option value="adc">ADC / Bot</option><option value="support">Support</option>
+                  <option value="top">Top</option><option value="jungle">Jungle</option><option value="mid">Mid</option>
+                </select>
+              </label>
+              <label class="field"><span>SECONDARY ROLES</span><input id="secondary-roles" placeholder="Support, Mid"></label>
+              <label class="field full-field"><span>CHAMPIONS YOU MASTER</span><input id="mastered-champions" placeholder="Vayne, Kai'Sa, Jinx"></label>
+              <label class="field full-field"><span>PLAYSTYLE</span><input id="play-preferences" placeholder="Aggressive, scaling, teamfights…"></label>
+            </div>
+            <div class="profile-actions"><span id="profile-feedback" role="status">Riot ID is required to save your profile.</span><button class="primary-button" type="submit"><span>Save my profile</span><b>→</b></button></div>
+          </form>
+        </section>
+        <section class="profile-note"><span>🔒</span><p><b>Privacy</b><br>Your profile is stored locally in this PC's user folder. It is not published or sent to an external service.</p></section>
+      </section>
+      <footer class="footer"><span>MADE FOR YOUR NEXT GAME.</span><span>STAKAP <i>·</i> RIOT DATA DRAGON <i>·</i> LOCAL MODE</span></footer>
+    </main>
+  </div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
