@@ -86,8 +86,15 @@ def save_profile():
         profile.game_name
         profile.tag_line
         save_config(profile)
-    except (ValueError, OSError) as exc:
+    except ValueError as exc:
         return jsonify(error=str(exc)), 400
+    except OSError as exc:
+        return jsonify(
+            error=(
+                "Le stockage du profil n'est pas disponible sur ce serveur. "
+                "Utilisez l'application dans votre navigateur pour le conserver localement."
+            )
+        ), 503
     return jsonify(profile_payload())
 
 

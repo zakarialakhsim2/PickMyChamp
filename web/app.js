@@ -1,5 +1,6 @@
 const $ = (selector) => document.querySelector(selector);
 let lookupSequence = 0;
+const PROFILE_STORAGE_KEY = "pickmychamp.profile";
 
 function splitList(value) {
   return value.split(",").map((part) => part.trim()).filter(Boolean);
@@ -151,7 +152,17 @@ function showPage(name) {
 }
 
 async function loadProfile() {
-  const profile = await requestJson("/api/profile");
+  let profile;
+  const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
+  if (storedProfile) {
+    try {
+      profile = JSON.parse(storedProfile);
+    } catch (error) {
+      localStorage.removeItem(PROFILE_STORAGE_KEY);
+      console.warn("Stored profile was invalid and has been cleared.", error);
+    }
+  }
+  if (!profile) profile = await requestJson("/api/profile");
   $("#profile-status").textContent = profile.configured
     ? `${profile.riot_id} · ${profile.region.toUpperCase()}`
     : "Profile not configured";
@@ -202,11 +213,16 @@ async function saveProfile(event) {
     preferences: splitList($("#play-preferences").value),
   };
   try {
-    const profile = await requestJson("/api/profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    const riotIdParts = payload.riot_id.split("#");
+    if (riotIdParts.length !== 2 || !riotIdParts[0].trim() || !riotIdParts[1].trim()) {
+      throw new Error("Riot ID must use the Name#TAG format.");
+    }
+    const profile = {
+      configured: true,
+      ...payload,
+      primary_role: payload.primary_role.toLowerCase(),
+    };
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
     $("#profile-status").textContent = `${profile.riot_id} · ${profile.region.toUpperCase()}`;
     setFeedback(feedback, "Profile saved on this computer.");
   } catch (requestError) {

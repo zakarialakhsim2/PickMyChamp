@@ -139,8 +139,11 @@ Le dépôt contient `api/index.py` et `vercel.json` pour Vercel Hobby. Dans
 Vercel, importe le dépôt GitHub `zakarialakhsim2/PickMyChamp`, garde la branche
 `master`, puis lance le déploiement sans ajouter de carte. Vercel exécute les
 routes Python comme des fonctions serverless et sert l'interface web depuis
-`web/`. Le profil est éphémère sur cette offre; les données U.GG et Data Dragon
-restent récupérées à la demande.
+`web/`. Sur le déploiement web, le profil est conservé dans le stockage local du
+navigateur, car le système de fichiers des fonctions serverless n'est pas
+persistent. En local, `python main.py setup` continue d'utiliser
+`~/.pickmychamp/config.json`. Les données U.GG et Data Dragon restent
+récupérées à la demande.
 
 ### Publicité
 
