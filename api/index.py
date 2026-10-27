@@ -1,4 +1,6 @@
-from flask import Flask, jsonify, request
+from pathlib import Path
+
+from flask import Flask, jsonify, request, send_from_directory
 
 from pickmychamp.config import AccountConfig, load_config, save_config
 from pickmychamp.counter_guides import champion_catalog
@@ -7,7 +9,8 @@ from pickmychamp.riot_api import PLATFORM_ROUTES
 from pickmychamp.recommendations import normalize_role
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=None)
+WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 
 
 @app.get("/api/champions")
@@ -86,3 +89,13 @@ def save_profile():
     except (ValueError, OSError) as exc:
         return jsonify(error=str(exc)), 400
     return jsonify(profile_payload())
+
+
+@app.get("/")
+def home():
+    return send_from_directory(WEB_DIR, "index.html")
+
+
+@app.get("/<path:filename>")
+def static_file(filename):
+    return send_from_directory(WEB_DIR, filename)
