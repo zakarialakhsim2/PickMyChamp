@@ -1,5 +1,3 @@
-# PickMyChamp
-
 ---
 title: PickMyChamp
 emoji: 🎮
@@ -8,6 +6,8 @@ colorTo: purple
 sdk: docker
 app_port: 7860
 ---
+
+# PickMyChamp
 
 Do you ever dodge queue or pick Vayne mid because because you don't know who else to play? PickMyChamp is a solution to all your problems: a utility to generate the best choice of champion in a game of League of Legends (LoL).
 
