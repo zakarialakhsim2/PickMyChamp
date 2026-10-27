@@ -224,7 +224,7 @@ async function saveProfile(event) {
     };
     localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
     $("#profile-status").textContent = `${profile.riot_id} · ${profile.region.toUpperCase()}`;
-    setFeedback(feedback, "Profile saved on this computer.");
+    setFeedback(feedback, "Profile saved in this browser.");
   } catch (requestError) {
     setFeedback(feedback, requestError.message, true);
   }
