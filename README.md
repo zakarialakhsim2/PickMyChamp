@@ -133,6 +133,15 @@ stockage éphémère gratuit.
 - Riot API et U.GG peuvent appliquer leurs propres limites et modifier leurs
   pages; l'application affiche explicitement les erreurs réseau.
 
+### Déploiement dynamique gratuit avec Vercel
+
+Le dépôt contient `api/index.py` et `vercel.json` pour Vercel Hobby. Dans
+Vercel, importe le dépôt GitHub `zakarialakhsim2/PickMyChamp`, garde la branche
+`master`, puis lance le déploiement sans ajouter de carte. Vercel exécute les
+routes Python comme des fonctions serverless et sert l'interface web depuis
+`web/`. Le profil est éphémère sur cette offre; les données U.GG et Data Dragon
+restent récupérées à la demande.
+
 ![Project Sample](images/SampleOutput.png)
 
 ## Legacy prototype
