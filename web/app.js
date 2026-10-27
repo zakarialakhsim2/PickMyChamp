@@ -20,6 +20,32 @@ function setFeedback(element, message, isError = false) {
   element.classList.toggle("feedback-error", isError);
 }
 
+function setupAds() {
+  const client = window.PICKMYCHAMP_ADSENSE_CLIENT || "";
+  const container = $("#ad-container");
+  if (!client || !/^ca-pub-\d+$/.test(client)) return;
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(client)}`;
+  script.crossOrigin = "anonymous";
+  document.head.append(script);
+  container.replaceChildren();
+  const ad = document.createElement("ins");
+  ad.className = "adsbygoogle";
+  ad.style.display = "block";
+  ad.dataset.adClient = client;
+  ad.dataset.adFormat = "auto";
+  ad.dataset.fullWidthResponsive = "true";
+  container.append(ad);
+  script.addEventListener("load", () => {
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (error) {
+      container.replaceChildren(document.createTextNode("Advertisement unavailable."));
+    }
+  });
+}
+
 async function requestJson(url, options) {
   const response = await fetch(url, options);
   const payload = await response.json();
@@ -195,6 +221,7 @@ $("#counter-form").addEventListener("submit", loadCounter);
 $("#enemy-champion").addEventListener("change", () => loadCounter(new Event("submit")));
 $("#draft-role").addEventListener("change", () => loadCounter(new Event("submit")));
 $("#profile-form").addEventListener("submit", saveProfile);
+setupAds();
 loadChampions();
 loadProfile().catch((error) => {
   $("#profile-status").textContent = "Profile unavailable";

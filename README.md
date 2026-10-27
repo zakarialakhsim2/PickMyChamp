@@ -142,6 +142,17 @@ routes Python comme des fonctions serverless et sert l'interface web depuis
 `web/`. Le profil est éphémère sur cette offre; les données U.GG et Data Dragon
 restent récupérées à la demande.
 
+### Publicité
+
+L'interface contient un emplacement AdSense discret au-dessus du pied de page.
+Il reste en mode emplacement réservé tant que l'identifiant éditeur n'est pas
+configuré. Pour activer les annonces, définir `window.PICKMYCHAMP_ADSENSE_CLIENT`
+dans `web/index.html` avec un identifiant `ca-pub-...` fourni par Google
+AdSense. L'approbation AdSense, une politique de confidentialité et le
+consentement cookies requis doivent être obtenus avant la diffusion réelle.
+Vérifier également les conditions commerciales de l'hébergeur avant d'activer
+la monétisation.
+
 ![Project Sample](images/SampleOutput.png)
 
 ## Legacy prototype
