@@ -165,6 +165,7 @@ def opgg_matchup_counters(enemy: str, role: str) -> dict:
             "champion",
             "position",
             "data.weak_counters[].{champion_name,counter_win_rate,my_win_rate,play,win_rate}",
+            "data.summary.positions[].counters[].{champion_name,play,win}",
         ]
         call_body = json.dumps(
             {
@@ -198,6 +199,13 @@ def opgg_matchup_counters(enemy: str, role: str) -> dict:
             r'WeakCounter\("([^"]+)",(\d+),([0-9.]+),([0-9.]+),([0-9.]+)\)',
             text,
         )
+        if not entries:
+            raw_entries = re.findall(r'Counter\("([^"]+)",(\d+),(\d+)\)', text)
+            entries = [
+                (name, play, "0", str(int(wins) / int(play)), str(int(wins) / int(play)))
+                for name, play, wins in raw_entries
+                if int(play) > 0
+            ]
         if not entries:
             raise ValueError(f"OP.GG returned no counter data for {enemy}.")
         return {
