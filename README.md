@@ -157,6 +157,15 @@ la monétisation.
 La liste des alternatives envisagées est conservée dans
 [`docs/advertising-options.md`](docs/advertising-options.md).
 
+### Future in-game AI companion
+
+La vision d'une interface compagnon en jeu, avec recommandations de build
+contextuelles et LLM optionnel, est documentée dans
+[`docs/in-game-ai-companion.md`](docs/in-game-ai-companion.md). Cette
+fonctionnalité n'est pas implémentée actuellement ; les règles Riot, la
+confidentialité et les limites contre l'automatisation devront être vérifiées
+avant tout développement.
+
 ![Project Sample](images/SampleOutput.png)
 
 ## Legacy prototype
