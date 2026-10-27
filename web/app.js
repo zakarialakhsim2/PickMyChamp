@@ -96,8 +96,14 @@ async function loadCounter(event) {
     $("#result-patch").textContent = `${data.source} · ${data.scope} · ${data.enemy_role || role} · Patch ${data.patch}`;
     const list = $("#recommendation-list");
     list.replaceChildren(...data.picks.map(renderCard));
+    if (!data.picks.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = data.fallback_message || "No matchup data is available right now.";
+      list.append(empty);
+    }
     const disclaimer = document.querySelector(".disclaimer p");
-    disclaimer.innerHTML = `${data.role_warning ? `<b>Lane note</b> — ${escapeHtml(data.role_warning)} ` : ""}<b>Matchup source</b> — ${escapeHtml(data.source)} ${escapeHtml(data.scope)} patch ${escapeHtml(data.patch)}; rates and game counts come from the public counter table. Builds are only included where a curated guide exists; otherwise open the linked English build guide. <a class="source-link" href="${escapeHtml(data.source_url)}" target="_blank" rel="noopener noreferrer">Open source ↗</a>`;
+    disclaimer.innerHTML = `${data.role_warning ? `<b>Lane note</b> — ${escapeHtml(data.role_warning)} ` : ""}${data.fallback_message ? `<b>Note</b> — ${escapeHtml(data.fallback_message)} ` : ""}<b>Matchup source</b> — ${escapeHtml(data.source)} ${escapeHtml(data.scope)} patch ${escapeHtml(data.patch)}. <a class="source-link" href="${escapeHtml(data.source_url)}" target="_blank" rel="noopener noreferrer">Open source ↗</a>`;
     results.hidden = false;
   } catch (requestError) {
     if (sequence !== lookupSequence) return;

@@ -112,6 +112,7 @@ def counter_payload(enemy: str, role: str) -> dict:
         "role_warning": role_warning,
         "source": matchup["source"],
         "source_url": matchup["source_url"],
+        "fallback_message": matchup.get("fallback_message"),
         "picks": picks,
     }
 

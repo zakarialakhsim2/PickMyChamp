@@ -104,7 +104,19 @@ class CounterPageParser(HTMLParser):
 
 def curated_fallback(enemy: str, role: str | None, url: str) -> dict | None:
     if enemy.casefold() != "vayne" or ROLE_NAMES.get((role or "").upper()) != "adc":
-        return None
+        return {
+            "enemy": enemy,
+            "enemy_role": ROLE_NAMES.get((role or "").upper()),
+            "patch": "unavailable",
+            "scope": "U.GG unavailable from serverless hosting",
+            "source_url": url,
+            "source": "U.GG unavailable",
+            "fallback_message": (
+                "U.GG is blocking requests from the deployment server. "
+                "Try Vayne ADC for the built-in curated guide, or try again later."
+            ),
+            "picks": [],
+        }
     return {
         "enemy": enemy,
         "enemy_role": "adc",
@@ -112,6 +124,10 @@ def curated_fallback(enemy: str, role: str | None, url: str) -> dict | None:
         "scope": "PickMyChamp curated guide",
         "source_url": url,
         "source": "PickMyChamp guide",
+        "fallback_message": (
+            "Live U.GG statistics are unavailable, so these recommendations use "
+            "the built-in PickMyChamp guide."
+        ),
         "picks": [
             {**pick, "win_rate": 0.0, "games": 0}
             for pick in CURATED_FALLBACK_PICKS
@@ -152,7 +168,7 @@ def matchup_counters(enemy: str, role: str | None = None) -> dict:
             page = response.read(PAGE_LIMIT).decode("utf-8", "replace")
     except HTTPError as exc:
         fallback = curated_fallback(normalized, role, url)
-        if fallback and exc.code == 403:
+        if exc.code == 403:
             return fallback
         raise RuntimeError(f"U.GG returned HTTP {exc.code} for {normalized}.") from exc
     except (URLError, TimeoutError) as exc:
