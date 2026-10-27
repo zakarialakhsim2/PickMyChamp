@@ -90,7 +90,7 @@
             <h1>Your <span>player profile.</span></h1>
             <p>Keep your preferences at hand. They are saved only in this browser.</p>
           </div>
-          <div class="profile-avatar">ADC</div>
+          <div id="profile-role-badge" class="profile-avatar">—</div>
         </div>
         <section class="profile-panel panel">
           <div class="panel-heading">
@@ -114,6 +114,7 @@
               </label>
               <label class="field"><span>PRIMARY ROLE</span>
                 <select id="primary-role">
+                  <option value="" selected disabled>Select your role</option>
                   <option value="adc">ADC / Bot</option><option value="support">Support</option>
                   <option value="top">Top</option><option value="jungle">Jungle</option><option value="mid">Mid</option>
                 </select>

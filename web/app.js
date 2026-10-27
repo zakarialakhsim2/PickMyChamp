@@ -21,6 +21,13 @@ function setFeedback(element, message, isError = false) {
   element.classList.toggle("feedback-error", isError);
 }
 
+function updateProfileRoleBadge() {
+  const select = $("#primary-role");
+  const badge = $("#profile-role-badge");
+  const option = select.options[select.selectedIndex];
+  badge.textContent = option && select.value ? option.textContent.split(" / ")[0] : "—";
+}
+
 function setupAds() {
   const client = window.PICKMYCHAMP_ADSENSE_CLIENT || "";
   const container = $("#ad-container");
@@ -170,6 +177,7 @@ async function loadProfile() {
   $("#riot-id").value = profile.riot_id;
   $("#profile-region").value = profile.region;
   $("#primary-role").value = profile.primary_role;
+  updateProfileRoleBadge();
   $("#secondary-roles").value = profile.secondary_roles.join(", ");
   $("#mastered-champions").value = profile.mastered_champions.join(", ");
   $("#play-preferences").value = profile.preferences.join(", ");
@@ -217,6 +225,9 @@ async function saveProfile(event) {
     if (riotIdParts.length !== 2 || !riotIdParts[0].trim() || !riotIdParts[1].trim()) {
       throw new Error("Riot ID must use the Name#TAG format.");
     }
+    if (!payload.primary_role) {
+      throw new Error("Select your primary role before saving.");
+    }
     const profile = {
       configured: true,
       ...payload,
@@ -237,6 +248,8 @@ $("#counter-form").addEventListener("submit", loadCounter);
 $("#enemy-champion").addEventListener("change", () => loadCounter(new Event("submit")));
 $("#draft-role").addEventListener("change", () => loadCounter(new Event("submit")));
 $("#profile-form").addEventListener("submit", saveProfile);
+$("#primary-role").addEventListener("change", updateProfileRoleBadge);
+updateProfileRoleBadge();
 setupAds();
 loadChampions();
 loadProfile().catch((error) => {
