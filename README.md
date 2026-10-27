@@ -145,11 +145,10 @@ restent récupérées à la demande.
 ### Publicité
 
 L'interface contient un emplacement AdSense discret au-dessus du pied de page.
-Il reste en mode emplacement réservé tant que l'identifiant éditeur n'est pas
-configuré. Pour activer les annonces, définir `window.PICKMYCHAMP_ADSENSE_CLIENT`
-dans `web/index.html` avec un identifiant `ca-pub-...` fourni par Google
-AdSense. L'approbation AdSense, une politique de confidentialité et le
-consentement cookies requis doivent être obtenus avant la diffusion réelle.
+L'identifiant éditeur AdSense est configuré dans `web/index.html` avec
+`ca-pub-6962406875891285`. La diffusion effective reste soumise à
+l'approbation du site par Google. Ajouter une politique de confidentialité et
+le consentement cookies requis avant la diffusion d'annonces personnalisées.
 Vérifier également les conditions commerciales de l'hébergeur avant d'activer
 la monétisation.
 
