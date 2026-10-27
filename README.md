@@ -151,6 +151,8 @@ l'approbation du site par Google. Ajouter une politique de confidentialité et
 le consentement cookies requis avant la diffusion d'annonces personnalisées.
 Vérifier également les conditions commerciales de l'hébergeur avant d'activer
 la monétisation.
+La liste des alternatives envisagées est conservée dans
+[`docs/advertising-options.md`](docs/advertising-options.md).
 
 ![Project Sample](images/SampleOutput.png)
 
