@@ -36,6 +36,11 @@ UGG_SLUGS = {
 UGG_DISPLAY_NAMES = {
     "nunu & willump": "nunu",
 }
+CURATED_FALLBACK_PICKS = (
+    {"champion": "Caitlyn", "slug": "caitlyn"},
+    {"champion": "Draven", "slug": "draven"},
+    {"champion": "Ashe", "slug": "ashe"},
+)
 
 
 class CounterPageParser(HTMLParser):
@@ -97,6 +102,23 @@ class CounterPageParser(HTMLParser):
             self.in_best_picks = False
 
 
+def curated_fallback(enemy: str, role: str | None, url: str) -> dict | None:
+    if enemy.casefold() != "vayne" or ROLE_NAMES.get((role or "").upper()) != "adc":
+        return None
+    return {
+        "enemy": enemy,
+        "enemy_role": "adc",
+        "patch": "current guide",
+        "scope": "PickMyChamp curated guide",
+        "source_url": url,
+        "source": "PickMyChamp guide",
+        "picks": [
+            {**pick, "win_rate": 0.0, "games": 0}
+            for pick in CURATED_FALLBACK_PICKS
+        ],
+    }
+
+
 @lru_cache(maxsize=64)
 def matchup_counters(enemy: str, role: str | None = None) -> dict:
     normalized = enemy.strip()
@@ -129,6 +151,9 @@ def matchup_counters(enemy: str, role: str | None = None) -> dict:
                 raise RuntimeError(f"U.GG returned HTTP {response.status}.")
             page = response.read(PAGE_LIMIT).decode("utf-8", "replace")
     except HTTPError as exc:
+        fallback = curated_fallback(normalized, role, url)
+        if fallback and exc.code == 403:
+            return fallback
         raise RuntimeError(f"U.GG returned HTTP {exc.code} for {normalized}.") from exc
     except (URLError, TimeoutError) as exc:
         raise RuntimeError(f"Could not load matchup data from U.GG: {exc}") from exc

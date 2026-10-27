@@ -58,9 +58,12 @@ def counter_payload(enemy: str, role: str) -> dict:
                 "reason": (
                     f"{stat['win_rate']:.2f}% win rate across {stat['games']:,} "
                     "games in U.GG's matchup dataset."
+                    if matchup["source"] == "U.GG"
+                    else "Curated guide pick; live matchup statistics are unavailable."
                 ),
                 "win_rate": stat["win_rate"],
                 "games": stat["games"],
+                "has_stats": matchup["source"] == "U.GG",
                 "support": guide.support if guide else "Not included in matchup data",
                 "support_alternative": (
                     guide.support_alternative if guide else "Check a duo-synergy guide"

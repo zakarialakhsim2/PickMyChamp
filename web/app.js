@@ -45,7 +45,7 @@ function renderCard(pick, index) {
       <span class="pick-number">0${index + 1}</span>
       <span class="champion-icon" aria-hidden="true">${initial}</span>
       <div class="pick-title"><h3>${champion}</h3><p>${escapeHtml(pick.reason)}</p></div>
-      <span class="pick-badge">${pick.win_rate.toFixed(2)}% · ${pick.games.toLocaleString("en-US")} games</span>
+      <span class="pick-badge">${pick.has_stats ? `${pick.win_rate.toFixed(2)}% · ${pick.games.toLocaleString("en-US")} games` : "CURATED GUIDE"}</span>
     </div>
     <div class="pick-details">
       <div class="detail-cell"><span>SUPPORT TO REQUEST</span><strong class="gold-text">${escapeHtml(pick.support)}</strong><strong>Alternative: ${escapeHtml(pick.support_alternative)}</strong></div>
