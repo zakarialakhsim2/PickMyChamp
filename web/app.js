@@ -164,19 +164,23 @@ async function loadProfile() {
   if (storedProfile) {
     try {
       profile = JSON.parse(storedProfile);
+      if (!profile.role_confirmed) {
+        profile.primary_role = "";
+      }
     } catch (error) {
       localStorage.removeItem(PROFILE_STORAGE_KEY);
       console.warn("Stored profile was invalid and has been cleared.", error);
     }
   }
   if (!profile) profile = await requestJson("/api/profile");
+  if (!profile.role_confirmed) profile.primary_role = "";
   $("#profile-status").textContent = profile.configured
     ? `${profile.riot_id} · ${profile.region.toUpperCase()}`
     : "Profile not configured";
   if (!profile.configured) return;
   $("#riot-id").value = profile.riot_id;
   $("#profile-region").value = profile.region;
-  $("#primary-role").value = profile.primary_role;
+  $("#primary-role").value = profile.primary_role || "";
   updateProfileRoleBadge();
   $("#secondary-roles").value = profile.secondary_roles.join(", ");
   $("#mastered-champions").value = profile.mastered_champions.join(", ");
@@ -232,6 +236,7 @@ async function saveProfile(event) {
       configured: true,
       ...payload,
       primary_role: payload.primary_role.toLowerCase(),
+      role_confirmed: true,
     };
     localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
     $("#profile-status").textContent = `${profile.riot_id} · ${profile.region.toUpperCase()}`;
