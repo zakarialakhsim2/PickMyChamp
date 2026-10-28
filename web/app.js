@@ -1,5 +1,6 @@
 const $ = (selector) => document.querySelector(selector);
 let lookupSequence = 0;
+const championIds = new Map();
 const PROFILE_STORAGE_KEY = "pickmychamp.profile";
 
 function splitList(value) {
@@ -19,6 +20,25 @@ function escapeHtml(value) {
 function setFeedback(element, message, isError = false) {
   element.textContent = message;
   element.classList.toggle("feedback-error", isError);
+}
+
+function updateEnemyStage() {
+  const select = $("#enemy-champion");
+  const option = select.options[select.selectedIndex];
+  const championName = option && option.value ? option.value : "Vayne";
+  const championId = option && option.dataset.championId ? option.dataset.championId : "Vayne";
+  const image = $("#enemy-art");
+  const fallback = $("#enemy-art-fallback");
+  $("#enemy-stage-name").textContent = championName;
+  image.alt = `${championName} splash art`;
+  image.hidden = false;
+  fallback.hidden = true;
+  image.onerror = () => {
+    image.hidden = true;
+    fallback.textContent = championName.slice(0, 1).toUpperCase();
+    fallback.hidden = false;
+  };
+  image.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(championId)}_0.jpg`;
 }
 
 function updateProfileRoleBadge() {
@@ -66,6 +86,8 @@ function renderCard(pick, index) {
   card.className = "pick-card";
   const champion = escapeHtml(pick.champion);
   const initial = escapeHtml(pick.champion.slice(0, 1));
+  const championId = championIds.get(pick.champion.toLocaleLowerCase())
+    || pick.champion.replace(/[^A-Za-z0-9]/g, "");
   const build = pick.build.map(escapeHtml).join(" → ");
   const buildMarkup = pick.guide_available
     ? `<strong>${escapeHtml(pick.starting_item)}</strong><strong>${build}</strong>`
@@ -75,11 +97,15 @@ function renderCard(pick, index) {
     .join("");
 
   card.innerHTML = `
-    <div class="pick-top">
+    <div class="pick-art">
+      <span class="pick-art-mark" aria-hidden="true">${initial}</span>
+      <img src="https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(championId)}_0.jpg" alt="" loading="lazy" decoding="async">
       <span class="pick-number">0${index + 1}</span>
+      <span class="pick-badge">${pick.has_stats ? `${pick.win_rate.toFixed(2)}% · ${pick.games.toLocaleString("en-US")} GAMES` : "CURATED GUIDE"}</span>
+    </div>
+    <div class="pick-top">
       <span class="champion-icon" aria-hidden="true">${initial}</span>
       <div class="pick-title"><h3>${champion}</h3><p>${escapeHtml(pick.reason)}</p></div>
-      <span class="pick-badge">${pick.has_stats ? `${pick.win_rate.toFixed(2)}% · ${pick.games.toLocaleString("en-US")} games` : "CURATED GUIDE"}</span>
     </div>
     <div class="pick-details">
       <div class="detail-cell"><span>SUPPORT TO REQUEST</span><strong class="gold-text">${escapeHtml(pick.support)}</strong><strong>Alternative: ${escapeHtml(pick.support_alternative)}</strong></div>
@@ -94,6 +120,11 @@ function renderCard(pick, index) {
     </div>`;
   const expand = card.querySelector(".expand-button");
   const details = card.querySelector(".extra-details");
+  const portrait = card.querySelector(".pick-art img");
+  portrait.addEventListener("error", () => {
+    portrait.hidden = true;
+    card.classList.add("portrait-missing");
+  }, { once: true });
   expand.addEventListener("click", () => {
     const expanded = expand.getAttribute("aria-expanded") === "true";
     expand.setAttribute("aria-expanded", String(!expanded));
@@ -192,9 +223,11 @@ async function loadChampions() {
   try {
     const data = await requestJson("/api/champions");
     const options = data.champions.map((champion) => {
+      championIds.set(champion.name.toLocaleLowerCase(), champion.id);
       const option = document.createElement("option");
       option.value = champion.name;
       option.textContent = champion.name;
+      option.dataset.championId = champion.id;
       return option;
     });
     select.replaceChildren(...options);
@@ -204,11 +237,13 @@ async function loadChampions() {
     if (vayne) select.value = vayne.name;
     select.disabled = false;
     $("#patch-label").textContent = data.patch;
+    updateEnemyStage();
     await loadCounter(new Event("submit"));
   } catch (error) {
     $("#error-message").textContent = error.message;
     $("#error-message").hidden = false;
     select.replaceChildren(new Option("Champion list unavailable", ""));
+    updateEnemyStage();
   }
 }
 
@@ -250,7 +285,10 @@ document.querySelectorAll(".nav-link").forEach((button) => {
   button.addEventListener("click", () => showPage(button.dataset.page));
 });
 $("#counter-form").addEventListener("submit", loadCounter);
-$("#enemy-champion").addEventListener("change", () => loadCounter(new Event("submit")));
+$("#enemy-champion").addEventListener("change", () => {
+  updateEnemyStage();
+  loadCounter(new Event("submit"));
+});
 $("#draft-role").addEventListener("change", () => loadCounter(new Event("submit")));
 $("#profile-form").addEventListener("submit", saveProfile);
 $("#primary-role").addEventListener("change", updateProfileRoleBadge);
