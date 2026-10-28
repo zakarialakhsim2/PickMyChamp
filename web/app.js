@@ -1,6 +1,9 @@
 const $ = (selector) => document.querySelector(selector);
 let lookupSequence = 0;
 const championIds = new Map();
+let championCatalog = [];
+let championPatch = "";
+let activeChampionOption = -1;
 const PROFILE_STORAGE_KEY = "pickmychamp.profile";
 
 function splitList(value) {
@@ -39,6 +42,152 @@ function updateEnemyStage() {
     fallback.hidden = false;
   };
   image.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(championId)}_0.jpg`;
+}
+
+function championPortraitUrl(championId) {
+  return `https://ddragon.leagueoflegends.com/cdn/${championPatch}/img/champion/${encodeURIComponent(championId)}.png`;
+}
+
+function renderChampionOptions(query = "") {
+  const list = $("#champion-picker-options");
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const matches = championCatalog.filter((champion) =>
+    champion.name.toLocaleLowerCase().includes(normalizedQuery)
+  );
+  list.replaceChildren();
+  activeChampionOption = -1;
+
+  if (!matches.length) {
+    const empty = document.createElement("div");
+    empty.className = "champion-picker-empty";
+    empty.textContent = "No champions found";
+    empty.setAttribute("role", "option");
+    empty.setAttribute("aria-disabled", "true");
+    list.append(empty);
+    return;
+  }
+
+  const selectedName = $("#enemy-champion").value;
+  matches.forEach((champion, index) => {
+    const option = document.createElement("button");
+    option.className = "champion-picker-option";
+    option.type = "button";
+    option.id = `champion-option-${index}`;
+    option.setAttribute("role", "option");
+    option.setAttribute("aria-selected", String(champion.name === selectedName));
+    option.dataset.championName = champion.name;
+
+    const art = document.createElement("span");
+    art.className = "champion-option-art";
+    const initial = document.createElement("span");
+    initial.textContent = champion.name.slice(0, 1).toUpperCase();
+    initial.setAttribute("aria-hidden", "true");
+    const image = document.createElement("img");
+    image.src = championPortraitUrl(champion.id);
+    image.alt = "";
+    image.loading = "lazy";
+    image.decoding = "async";
+    image.addEventListener("error", () => { image.hidden = true; }, { once: true });
+    art.append(initial, image);
+
+    const name = document.createElement("span");
+    name.className = "champion-option-name";
+    name.textContent = champion.name;
+    option.append(art, name);
+    option.addEventListener("click", () => selectChampion(champion));
+    list.append(option);
+  });
+}
+
+function updateChampionPicker(champion) {
+  if (!champion) return;
+  const input = $("#champion-search");
+  const picker = $("#champion-picker");
+  const image = $("#champion-picker-image");
+  input.value = champion.name;
+  $("#champion-picker-initial").textContent = champion.name.slice(0, 1).toUpperCase();
+  picker.classList.add("has-selection");
+  image.hidden = false;
+  image.onerror = () => { image.hidden = true; };
+  image.src = championPortraitUrl(champion.id);
+}
+
+function setActiveChampionOption(index) {
+  const options = [...$("#champion-picker-options").querySelectorAll("[role='option']:not([aria-disabled='true'])")];
+  if (!options.length) return;
+  activeChampionOption = (index + options.length) % options.length;
+  options.forEach((option, optionIndex) => option.classList.toggle("active", optionIndex === activeChampionOption));
+  const activeOption = options[activeChampionOption];
+  $("#champion-search").setAttribute("aria-activedescendant", activeOption.id);
+  activeOption.scrollIntoView({ block: "nearest" });
+}
+
+function openChampionPicker(query = "") {
+  const input = $("#champion-search");
+  const toggle = $("#champion-picker-toggle");
+  $("#champion-picker-options").hidden = false;
+  input.setAttribute("aria-expanded", "true");
+  toggle.setAttribute("aria-expanded", "true");
+  renderChampionOptions(query);
+}
+
+function closeChampionPicker() {
+  $("#champion-picker-options").hidden = true;
+  $("#champion-search").setAttribute("aria-expanded", "false");
+  $("#champion-search").removeAttribute("aria-activedescendant");
+  $("#champion-picker-toggle").setAttribute("aria-expanded", "false");
+}
+
+function selectChampion(champion) {
+  const select = $("#enemy-champion");
+  select.value = champion.name;
+  updateChampionPicker(champion);
+  closeChampionPicker();
+  updateEnemyStage();
+  loadCounter(new Event("submit"));
+}
+
+function setupChampionPicker() {
+  const input = $("#champion-search");
+  const toggle = $("#champion-picker-toggle");
+  input.addEventListener("focus", () => {
+    const query = input.value === $("#enemy-champion").value ? "" : input.value;
+    openChampionPicker(query);
+    if (!query) input.select();
+  });
+  input.addEventListener("input", () => openChampionPicker(input.value));
+  input.addEventListener("keydown", (event) => {
+    const options = $("#champion-picker-options").querySelectorAll("[role='option']:not([aria-disabled='true'])");
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if ($("#champion-picker-options").hidden) openChampionPicker(input.value === $("#enemy-champion").value ? "" : input.value);
+      const direction = event.key === "ArrowDown" ? 1 : -1;
+      const nextIndex = activeChampionOption < 0 && direction < 0
+        ? options.length - 1
+        : activeChampionOption + direction;
+      setActiveChampionOption(nextIndex);
+    } else if (event.key === "Enter" && !$("#champion-picker-options").hidden) {
+      event.preventDefault();
+      const active = options[activeChampionOption] || options[0];
+      if (active && active.dataset.championName) {
+        const champion = championCatalog.find((entry) => entry.name === active.dataset.championName);
+        if (champion) selectChampion(champion);
+      }
+    } else if (event.key === "Escape") {
+      closeChampionPicker();
+    }
+  });
+  toggle.addEventListener("click", () => {
+    if ($("#champion-picker-options").hidden) {
+      input.focus();
+      openChampionPicker("");
+    } else {
+      closeChampionPicker();
+    }
+  });
+  document.addEventListener("click", (event) => {
+    if (!$("#champion-picker").contains(event.target)) closeChampionPicker();
+  });
 }
 
 function updateProfileRoleBadge() {
@@ -138,7 +287,11 @@ async function loadCounter(event) {
   event.preventDefault();
   const sequence = ++lookupSequence;
   const enemySelect = $("#enemy-champion");
-  const enemy = enemySelect.value.trim();
+  const selectedEnemy = enemySelect.value.trim();
+  const searchValue = $("#champion-search").value.trim();
+  const enemy = selectedEnemy.toLocaleLowerCase() === searchValue.toLocaleLowerCase()
+    ? selectedEnemy
+    : "";
   const role = $("#draft-role").value;
   const error = $("#error-message");
   const loading = $("#loading-message");
@@ -222,6 +375,9 @@ async function loadChampions() {
   const select = $("#enemy-champion");
   try {
     const data = await requestJson("/api/champions");
+    championCatalog = data.champions;
+    championPatch = data.patch;
+    championIds.clear();
     const options = data.champions.map((champion) => {
       championIds.set(champion.name.toLocaleLowerCase(), champion.id);
       const option = document.createElement("option");
@@ -236,13 +392,18 @@ async function loadChampions() {
     );
     if (vayne) select.value = vayne.name;
     select.disabled = false;
+    $("#champion-search").disabled = false;
+    $("#champion-picker-toggle").disabled = false;
     $("#patch-label").textContent = data.patch;
+    updateChampionPicker(vayne || data.champions[0]);
     updateEnemyStage();
     await loadCounter(new Event("submit"));
   } catch (error) {
     $("#error-message").textContent = error.message;
     $("#error-message").hidden = false;
     select.replaceChildren(new Option("Champion list unavailable", ""));
+    $("#champion-search").disabled = true;
+    $("#champion-picker-toggle").disabled = true;
     updateEnemyStage();
   }
 }
@@ -286,6 +447,8 @@ document.querySelectorAll(".nav-link").forEach((button) => {
 });
 $("#counter-form").addEventListener("submit", loadCounter);
 $("#enemy-champion").addEventListener("change", () => {
+  const champion = championCatalog.find((entry) => entry.name === $("#enemy-champion").value);
+  if (champion) updateChampionPicker(champion);
   updateEnemyStage();
   loadCounter(new Event("submit"));
 });
@@ -293,6 +456,7 @@ $("#draft-role").addEventListener("change", () => loadCounter(new Event("submit"
 $("#profile-form").addEventListener("submit", saveProfile);
 $("#primary-role").addEventListener("change", updateProfileRoleBadge);
 updateProfileRoleBadge();
+setupChampionPicker();
 setupAds();
 loadChampions();
 loadProfile().catch((error) => {

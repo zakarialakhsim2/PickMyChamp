@@ -70,11 +70,20 @@
                 <option value="mid">Mid</option>
               </select>
             </label>
-            <label class="field enemy-field"><span>ENEMY PICK</span>
-              <select id="enemy-champion" required disabled>
+            <div class="field enemy-field">
+              <span id="enemy-picker-label">ENEMY PICK</span>
+              <div id="champion-picker" class="champion-picker">
+                <div class="champion-picker-control">
+                  <span class="champion-picker-art"><span id="champion-picker-initial" aria-hidden="true">?</span><img id="champion-picker-image" alt="" hidden></span>
+                  <input id="champion-search" type="text" role="combobox" aria-labelledby="enemy-picker-label" aria-autocomplete="list" aria-haspopup="listbox" aria-expanded="false" aria-controls="champion-picker-options" placeholder="Search or choose a champion…" autocomplete="off" disabled>
+                  <button id="champion-picker-toggle" class="champion-picker-toggle" type="button" aria-label="Show champion list" aria-expanded="false" aria-controls="champion-picker-options" disabled><span aria-hidden="true"></span></button>
+                </div>
+                <div id="champion-picker-options" class="champion-picker-options" role="listbox" aria-label="Enemy champions" hidden></div>
+              </div>
+              <select id="enemy-champion" class="champion-select-native" aria-hidden="true" tabindex="-1" required disabled>
                 <option value="">Loading champions…</option>
               </select>
-            </label>
+            </div>
             <button class="primary-button" type="submit"><span>Lock matchup</span><b>→</b></button>
           </form>
           <div class="form-footnote"><span>+</span> Picks refresh when you change the champion or lane.</div>
