@@ -1,0 +1,50 @@
+{
+  "snapshot": {
+    "state_version": 42,
+    "champion": "Caitlyn",
+    "role": "adc",
+    "level": 12,
+    "gold": 2400,
+    "item_ids": ["test-owned"],
+    "rune_ids": ["FleetFootwork"],
+    "cooldown_context": {
+      "ready_abilities": ["Q", "E"],
+      "ultimate_ready": true
+    },
+    "allies": [
+      {"champion": "Karma", "role": "support"}
+    ],
+    "visible_opponents": [
+      {"champion": "Vayne", "role": "adc", "item_ids": ["test-opponent-item"]}
+    ],
+    "objectives": [
+      {"name": "dragon", "state": "alive", "seconds_until_spawn": 30}
+    ],
+    "recent_events": [
+      {"kind": "team_fight", "seconds_ago": 60}
+    ],
+    "signals": ["enemy_armor_stack", "enemy_sustain"]
+  },
+  "catalog": [
+    {"item_id": "test-penetration", "name": "Synthetic Penetration Item", "total_cost": 3200, "map_ids": [11], "purchasable": true},
+    {"item_id": "test-utility", "name": "Synthetic Utility Item", "total_cost": 1800, "map_ids": [11], "purchasable": true},
+    {"item_id": "test-owned", "name": "Synthetic Owned Item", "total_cost": 1000, "map_ids": [11], "purchasable": true},
+    {"item_id": "test-off-map", "name": "Synthetic Off-Map Item", "total_cost": 1000, "map_ids": [12], "purchasable": true},
+    {"item_id": "test-unavailable", "name": "Synthetic Unavailable Item", "total_cost": 1000, "map_ids": [11], "purchasable": false},
+    {"item_id": "test-support", "name": "Synthetic Support Item", "total_cost": 1000, "map_ids": [11], "purchasable": true},
+    {"item_id": "test-unmatched", "name": "Synthetic Unmatched Item", "total_cost": 1000, "map_ids": [11], "purchasable": true}
+  ],
+  "rules": [
+    {"item_id": "test-penetration", "priority": 90, "reason": "Fixture rule: respond to the armor signal.", "roles": ["adc"], "required_signals": ["enemy_armor_stack"]},
+    {"item_id": "test-utility", "priority": 80, "reason": "Fixture rule: respond to the sustain signal.", "roles": ["bottom"], "required_signals": ["enemy_sustain"]},
+    {"item_id": "test-owned", "priority": 110, "reason": "Must be filtered because it is owned."},
+    {"item_id": "test-off-map", "priority": 105, "reason": "Must be filtered because it is not on Summoner's Rift."},
+    {"item_id": "test-unavailable", "priority": 100, "reason": "Must be filtered because it is not purchasable."},
+    {"item_id": "test-support", "priority": 95, "reason": "Must be filtered because the role does not match.", "roles": ["support"]},
+    {"item_id": "test-unmatched", "priority": 120, "reason": "Must be filtered because its signal is absent.", "required_signals": ["enemy_shields"]}
+  ],
+  "expected": [
+    {"item_id": "test-penetration", "action": "save_for", "priority": 90, "gold_shortfall": 800},
+    {"item_id": "test-utility", "action": "buy_next", "priority": 80, "gold_shortfall": 0}
+  ]
+}

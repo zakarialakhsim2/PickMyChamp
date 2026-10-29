@@ -150,6 +150,36 @@ distribution or public monetization. This document is not legal advice.
 
 ## Current status
 
-Not implemented. The current PickMyChamp deployment is a web draft
-assistant. This document records the intended direction so that future work
-starts with a safe, testable and policy-aware scope.
+The current PickMyChamp deployment remains a web draft assistant. The first
+offline-only Phase 1 slice now has typed snapshots, a deterministic rule ranker,
+a replayable synthetic fixture, and a pure parser for Data Dragon's item JSON
+schema. Current-patch item definitions can be loaded on demand while the
+existing name/rune catalog API remains unchanged. The fixture data and rules are
+synthetic: golden tests verify deterministic behavior, not gameplay quality.
+Meaningful quality measurement remains pending a trusted, policy-compliant
+labeled benchmark. The ranker is not connected to the League client, the web
+application, or an LLM, and it does not emit live recommendations.
+
+## Policy review (2026-10-29)
+
+Official Riot documentation reviewed on this date:
+
+- [Third-party applications](https://support.riotgames.com/en-us/riot/events/third-party-applications)
+  warns against applications that provide a measurable advantage, including
+  drawing conclusions for players during gameplay.
+- [League of Legends developer policy and API documentation](https://developer.riotgames.com/docs/lol)
+  disallows session-specific information previously unknown to the player and
+  applications that dictate player decisions. It also describes the League
+  Client API as unsupported for third-party applications and requires developers
+  to register products and disclose their use of client endpoints.
+- [General developer policies](https://developer.riotgames.com/policies/general)
+  require product registration and audit, including new features, and recommend
+  supported Riot data services.
+
+These policies do not approve the proposed live build coach. The live
+recommendation loop, overlay, and LLM explanation are blocked pending explicit
+guidance from Riot through the Developer Portal. The existing read-only client
+integration does not by itself establish policy approval. Until that question
+is resolved, implementation is limited to synthetic offline fixtures and
+post-game research; no live connector or in-match recommendation UI should be
+added.

@@ -4,6 +4,8 @@ import json
 from urllib.error import URLError
 from urllib.request import urlopen
 
+from .item_companion import ItemDefinition, parse_data_dragon_item_catalog
+
 
 @dataclass(frozen=True)
 class CounterPick:
@@ -138,7 +140,7 @@ def champion_catalog() -> tuple[str, list[dict[str, str]]]:
     return patch, champions
 
 
-def current_patch_catalog() -> tuple[str, dict[str, str], dict[str, str], dict[str, str]]:
+def _current_patch_item_payload() -> tuple[str, dict]:
     try:
         with urlopen(
             "https://ddragon.leagueoflegends.com/api/versions.json", timeout=10
@@ -152,6 +154,19 @@ def current_patch_catalog() -> tuple[str, dict[str, str], dict[str, str], dict[s
             timeout=10,
         ) as response:
             item_payload = json.loads(response.read().decode("utf-8"))
+    except (URLError, TimeoutError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"Could not load current Riot item and rune data: {exc}") from exc
+    return patch, item_payload
+
+
+def current_patch_item_catalog() -> tuple[str, dict[str, ItemDefinition]]:
+    patch, item_payload = _current_patch_item_payload()
+    return patch, parse_data_dragon_item_catalog(item_payload)
+
+
+def current_patch_catalog() -> tuple[str, dict[str, str], dict[str, str], dict[str, str]]:
+    patch, item_payload = _current_patch_item_payload()
+    try:
         with urlopen(
             f"https://ddragon.leagueoflegends.com/cdn/{patch}/data/en_US/runesReforged.json",
             timeout=10,
