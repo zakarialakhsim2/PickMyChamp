@@ -41,6 +41,9 @@ champions by role for both teams to get a cautious, rules-based team briefing.
 Its curated strategy profiles are limited, so the briefing shows its evidence
 and coverage and may report that no reliable pattern is available. It is not a
 win-rate prediction or a substitute for matchup statistics.
+Generated drafts can be shared as links. The link encodes only the selected
+champions, player role, and patch in the URL fragment; it does not save a draft
+on the server or include the local profile or Riot ID.
 
 The original commands remain available, for example
 `python main.py history --count 50` or `python main.py counter --enemy Vayne

@@ -945,7 +945,26 @@ body::before { display: none; }
 }
 @media (max-width: 650px) {
   .sidebar { background: #101417; border-bottom: 2px solid var(--arena-acid); gap: 5px; justify-content: flex-start; padding: 9px 10px; width: 100%; }
-  .brand { flex: 1 1 auto; font-size: 12px; gap: 7px; margin-right: auto; min-width: 0; }
+  .brand { flex: 1 1 auto; font-size: 12px; gap: 7px; margin-right: auto; min-width: 0;   }
+
+  .playbook-share-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .playbook-share-actions [role="status"] {
+    color: var(--arena-muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .playbook-share-actions .primary-button:disabled {
+    cursor: wait;
+    opacity: .7;
+  }
   .brand-signature { display: none; }
   .brand-mark { height: 32px; width: 32px; }
   .sidebar .nav-link { border-radius: 2px; color: #c3ccc6; flex: 0 0 auto; font-size: 11px; gap: 4px; padding: 7px 5px; width: auto; }

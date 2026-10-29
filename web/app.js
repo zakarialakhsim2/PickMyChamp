@@ -7,6 +7,8 @@ const championIds = new Map();
 let championCatalog = [];
 let activeChampionOption = -1;
 const PROFILE_STORAGE_KEY = "pickmychamp.profile";
+const SHAREABLE_ROLES = ["top", "jungle", "mid", "adc", "support"];
+const MAX_DRAFT_SHARE_TOKEN_LENGTH = 2048;
 
 function splitList(value) {
   return value.split(",").map((part) => part.trim()).filter(Boolean);
@@ -30,11 +32,20 @@ function setFeedback(element, message, isError = false) {
 function updateEnemyStage() {
   const select = $("#enemy-champion");
   const option = select.options[select.selectedIndex];
-  const championName = option && option.value ? option.value : "Vayne";
-  const championId = option && option.dataset.championId ? option.dataset.championId : "Vayne";
+  const hasSelection = Boolean(option && option.value);
+  const championName = hasSelection ? option.value : "No pick";
+  const championId = hasSelection && option.dataset.championId ? option.dataset.championId : "";
   const image = $("#enemy-art");
   const fallback = $("#enemy-art-fallback");
   $("#enemy-stage-name").textContent = championName;
+  $("#enemy-stage-status").textContent = hasSelection ? "ENEMY LOCKED" : "NO ENEMY PICK";
+  $("#enemy-stage-caption").textContent = hasSelection ? "SCOUT THE PICK" : "CHOOSE A CHAMPION";
+  if (!hasSelection) {
+    image.hidden = true;
+    fallback.textContent = "—";
+    fallback.hidden = false;
+    return;
+  }
   image.alt = `${championName} splash art`;
   image.hidden = false;
   fallback.hidden = true;
@@ -199,6 +210,121 @@ function collectDraftTeam(team) {
     if (select.value) picks[select.dataset.role] = select.value;
   });
   return picks;
+}
+
+function encodeDraftShare(draft) {
+  const bytes = new TextEncoder().encode(JSON.stringify(draft));
+  const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join("");
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function decodeDraftShare(token) {
+  if (!token || token.length > MAX_DRAFT_SHARE_TOKEN_LENGTH || !/^[A-Za-z0-9_-]+$/.test(token)) {
+    throw new Error("This shared draft link is invalid or too large.");
+  }
+  const base64 = token.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+  const bytes = Uint8Array.from(atob(padded), (character) => character.charCodeAt(0));
+  const draft = JSON.parse(new TextDecoder().decode(bytes));
+  const isRecord = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+  const isValidTeam = (team) => isRecord(team) && Object.entries(team).every(
+    ([role, champion]) => SHAREABLE_ROLES.includes(role)
+      && typeof champion === "string"
+      && championCatalog.some((entry) => entry.name === champion)
+  );
+  if (!isRecord(draft)
+    || draft.version !== 1
+    || typeof draft.patch !== "string"
+    || draft.patch.length > 32
+    || !SHAREABLE_ROLES.includes(draft.playerRole)
+    || !isValidTeam(draft.allies)
+    || !isValidTeam(draft.enemies)
+    || (draft.enemy !== null && typeof draft.enemy !== "string")
+    || !Object.keys(draft.allies).length
+    || !Object.keys(draft.enemies).length
+    || (draft.enemy && !championCatalog.some((entry) => entry.name === draft.enemy))) {
+    throw new Error("This shared draft link contains unsupported picks.");
+  }
+  return draft;
+}
+
+function sharedDraftFromLocation() {
+  const token = new URLSearchParams(window.location.hash.slice(1)).get("draft");
+  return token ? decodeDraftShare(token) : null;
+}
+
+function applySharedDraft(draft) {
+  $("#draft-role").value = draft.playerRole;
+  document.querySelectorAll(".draft-slot").forEach((select) => {
+    const team = select.dataset.team === "allies" ? draft.allies : draft.enemies;
+    select.value = team[select.dataset.role] || "";
+  });
+
+  const enemy = championCatalog.find((entry) => entry.name === draft.enemy);
+  $("#enemy-champion").value = enemy ? enemy.name : "";
+  const picker = $("#champion-picker");
+  const input = $("#champion-search");
+  const image = $("#champion-picker-image");
+  if (enemy) {
+    updateChampionPicker(enemy);
+  } else {
+    input.value = "";
+    picker.classList.remove("has-selection");
+    image.hidden = true;
+    image.removeAttribute("src");
+  }
+  syncedEnemyLanePick = enemy
+    && draft.enemies[draft.playerRole] === enemy.name
+    ? { role: draft.playerRole, champion: enemy.name }
+    : null;
+  updateEnemyStage();
+
+  const feedback = $("#share-draft-feedback");
+  if (draft.patch && draft.patch !== $("#patch-label").textContent) {
+    feedback.textContent =
+      `Shared from patch ${draft.patch}; this draft is being opened with patch ${$("#patch-label").textContent}.`;
+  } else {
+    feedback.textContent = "Shared draft loaded. Only champion picks and your role are in this link.";
+  }
+}
+
+async function shareDraft() {
+  const button = $("#share-draft-button");
+  const feedback = $("#share-draft-feedback");
+  const payload = {
+    version: 1,
+    patch: $("#patch-label").textContent,
+    playerRole: $("#draft-role").value,
+    allies: collectDraftTeam("allies"),
+    enemies: collectDraftTeam("enemies"),
+    enemy: $("#enemy-champion").value || null,
+  };
+  const shareUrl = new URL(window.location.href);
+  shareUrl.hash = `draft=${encodeDraftShare(payload)}`;
+
+  button.disabled = true;
+  feedback.textContent = "Preparing your draft link…";
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: "PickMyChamp draft",
+        text: "Take a look at this League draft.",
+        url: shareUrl.href,
+      });
+      feedback.textContent = "Draft shared.";
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(shareUrl.href);
+      feedback.textContent = "Draft link copied. It contains champion picks and your role only.";
+    } else {
+      throw new Error("This browser cannot share or copy links. Copy the page URL and try again.");
+    }
+  } catch (error) {
+    feedback.textContent = error.name === "AbortError"
+      ? "Sharing cancelled."
+      : error.message;
+  } finally {
+    button.disabled = false;
+  }
 }
 
 function appendRoleJob(list, item) {
@@ -543,14 +669,28 @@ async function loadChampions() {
     );
     if (vayne) select.value = vayne.name;
     populateDraftSlots();
+    let sharedDraft = null;
+    try {
+      sharedDraft = sharedDraftFromLocation();
+    } catch (error) {
+      $("#playbook-error").textContent = error.message;
+      $("#playbook-error").hidden = false;
+    }
     select.disabled = false;
     $("#champion-search").disabled = false;
     $("#champion-picker-toggle").disabled = false;
     $("#patch-label").textContent = data.patch;
-    updateChampionPicker(vayne || data.champions[0]);
+    if (sharedDraft) {
+      applySharedDraft(sharedDraft);
+    } else {
+      updateChampionPicker(vayne || data.champions[0]);
+      syncEnemyLanePick();
+    }
     updateEnemyStage();
-    syncEnemyLanePick();
-    await loadCounter(new Event("submit"));
+    if (!sharedDraft || $("#enemy-champion").value) {
+      await loadCounter(new Event("submit"));
+    }
+    if (sharedDraft) await loadPlaybook();
   } catch (error) {
     $("#error-message").textContent = error.message;
     $("#error-message").hidden = false;
@@ -614,6 +754,7 @@ $("#draft-role").addEventListener("change", () => {
 });
 $("#profile-form").addEventListener("submit", saveProfile);
 $("#playbook-form").addEventListener("submit", loadPlaybook);
+$("#share-draft-button").addEventListener("click", shareDraft);
 document.querySelectorAll(".draft-slot").forEach((select) => {
   select.addEventListener("change", () => {
     if (playbookWasGenerated) loadPlaybook();

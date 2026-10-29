@@ -50,7 +50,7 @@
           <div class="hero-rank">
             <img id="enemy-art" src="https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Vayne_0.jpg" alt="Vayne splash art" fetchpriority="high">
             <span id="enemy-art-fallback" class="enemy-art-fallback" hidden>V</span>
-            <div class="enemy-stage-caption"><span>ENEMY LOCKED</span><strong>SCOUT THE PICK</strong><small>DATA DRAGON · OFFICIAL ART</small></div>
+            <div class="enemy-stage-caption"><span id="enemy-stage-status">ENEMY LOCKED</span><strong id="enemy-stage-caption">SCOUT THE PICK</strong><small>DATA DRAGON · OFFICIAL ART</small></div>
             <span class="rank-sigil" aria-hidden="true">VS</span>
           </div>
         </div>
@@ -164,6 +164,12 @@
             <ul id="playbook-role-jobs" class="role-jobs-list"></ul>
           </article>
           <p id="playbook-notes" class="playbook-caveat"></p>
+          <div class="playbook-share-actions">
+            <button id="share-draft-button" class="primary-button" type="button">
+              <span>Share this draft</span><b>↗</b>
+            </button>
+            <span id="share-draft-feedback" role="status" aria-live="polite"></span>
+          </div>
         </section>
       </section>
 
