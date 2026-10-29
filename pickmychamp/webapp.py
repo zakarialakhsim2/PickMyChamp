@@ -5,6 +5,10 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 import webbrowser
 
+from pickmychamp.champion_assets import (
+    CHAMPION_ASSET_CACHE_CONTROL,
+    fetch_champion_asset,
+)
 from pickmychamp.config import AccountConfig, load_config, save_config
 from pickmychamp.counter_guides import (
     champion_catalog,
@@ -167,6 +171,29 @@ class PickMyChampHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
+        asset_prefix = "/api/champion-asset/"
+        if parsed.path.startswith(asset_prefix):
+            route_parts = parsed.path[len(asset_prefix):].split("/")
+            if len(route_parts) != 2:
+                self.send_error(404)
+                return
+            asset_type, champion_id = route_parts
+            try:
+                image, content_type = fetch_champion_asset(asset_type, champion_id)
+            except ValueError as exc:
+                self._json(404, {"error": str(exc)})
+                return
+            except RuntimeError as exc:
+                self._json(502, {"error": str(exc)})
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(image)))
+            self.send_header("Cache-Control", CHAMPION_ASSET_CACHE_CONTROL)
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.end_headers()
+            self.wfile.write(image)
+            return
         if parsed.path == "/api/champions":
             try:
                 patch, champions = champion_catalog()

@@ -116,6 +116,18 @@ class WebAppTests(unittest.TestCase):
                     catalog = json.loads(response.read().decode("utf-8"))
             self.assertEqual(catalog["champions"][0]["name"], "Vayne")
 
+            image = b"\x89PNG\r\n\x1a\nportrait"
+            with patch(
+                "pickmychamp.webapp.fetch_champion_asset",
+                return_value=(image, "image/png"),
+            ) as fetch:
+                with urlopen(
+                    f"{url}/api/champion-asset/portrait/Vayne", timeout=3
+                ) as response:
+                    self.assertEqual(response.headers.get_content_type(), "image/png")
+                    self.assertEqual(response.read(), image)
+            fetch.assert_called_once_with("portrait", "Vayne")
+
             request = Request(
                 f"{url}/api/playbook",
                 data=json.dumps(

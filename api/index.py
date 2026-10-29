@@ -2,6 +2,10 @@ from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
 
+from pickmychamp.champion_assets import (
+    CHAMPION_ASSET_CACHE_CONTROL,
+    fetch_champion_asset,
+)
 from pickmychamp.config import AccountConfig, load_config, save_config
 from pickmychamp.counter_guides import champion_catalog
 from pickmychamp.draft_playbook import generate_playbook
@@ -21,6 +25,20 @@ def champions():
     except RuntimeError as exc:
         return jsonify(error=str(exc)), 502
     return jsonify(patch=patch, champions=catalog)
+
+
+@app.get("/api/champion-asset/<asset_type>/<champion_id>")
+def champion_asset(asset_type, champion_id):
+    try:
+        image, content_type = fetch_champion_asset(asset_type, champion_id)
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 404
+    except RuntimeError as exc:
+        return jsonify(error=str(exc)), 502
+    response = app.response_class(image, mimetype=content_type)
+    response.headers["Cache-Control"] = CHAMPION_ASSET_CACHE_CONTROL
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 @app.get("/api/counter")

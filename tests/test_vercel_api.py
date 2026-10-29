@@ -89,6 +89,21 @@ class VercelApiFunctionalTests(unittest.TestCase):
         self.assertEqual(response.status_code, 502)
         self.assertEqual(response.get_json()["error"], "upstream unavailable")
 
+    def test_champion_asset_is_served_with_cache_headers(self):
+        image = b"\x89PNG\r\n\x1a\nportrait"
+        with patch(
+            "api.index.fetch_champion_asset",
+            return_value=(image, "image/png"),
+        ) as fetch:
+            response = self.client.get("/api/champion-asset/portrait/Vayne")
+
+        fetch.assert_called_once_with("portrait", "Vayne")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, image)
+        self.assertEqual(response.mimetype, "image/png")
+        self.assertIn("s-maxage=3600", response.headers["Cache-Control"])
+        self.assertEqual(response.headers["X-Content-Type-Options"], "nosniff")
+
 
 if __name__ == "__main__":
     unittest.main()

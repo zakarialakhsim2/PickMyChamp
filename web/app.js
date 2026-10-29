@@ -4,9 +4,7 @@ let playbookSequence = 0;
 let playbookWasGenerated = false;
 let syncedEnemyLanePick = null;
 const championIds = new Map();
-const championPortraitPreloads = new Set();
 let championCatalog = [];
-let championPatch = "";
 let activeChampionOption = -1;
 const PROFILE_STORAGE_KEY = "pickmychamp.profile";
 
@@ -45,22 +43,19 @@ function updateEnemyStage() {
     fallback.textContent = championName.slice(0, 1).toUpperCase();
     fallback.hidden = false;
   };
-  image.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(championId)}_0.jpg`;
+  image.src = championSplashUrl(championId);
+}
+
+function championAssetUrl(assetType, championId) {
+  return `/api/champion-asset/${assetType}/${encodeURIComponent(championId)}`;
 }
 
 function championPortraitUrl(championId) {
-  return `https://ddragon.leagueoflegends.com/cdn/${championPatch}/img/champion/${encodeURIComponent(championId)}.png`;
+  return championAssetUrl("portrait", championId);
 }
 
-function preloadChampionPortraits(champions) {
-  champions.forEach((champion) => {
-    const image = new Image();
-    const release = () => championPortraitPreloads.delete(image);
-    championPortraitPreloads.add(image);
-    image.addEventListener("load", release, { once: true });
-    image.addEventListener("error", release, { once: true });
-    image.src = championPortraitUrl(champion.id);
-  });
+function championSplashUrl(championId) {
+  return championAssetUrl("splash", championId);
 }
 
 function renderChampionOptions(query = "") {
@@ -405,7 +400,7 @@ function renderCard(pick, index) {
   card.innerHTML = `
     <div class="pick-art">
       <span class="pick-art-mark" aria-hidden="true">${initial}</span>
-      <img src="https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(championId)}_0.jpg" alt="" loading="lazy" decoding="async">
+      <img src="${escapeHtml(championSplashUrl(championId))}" alt="" loading="lazy" decoding="async">
       <span class="pick-number">0${index + 1}</span>
       <span class="pick-badge">${pick.has_stats ? `${pick.win_rate.toFixed(2)}% · ${pick.games.toLocaleString("en-US")} GAMES` : "CURATED GUIDE"}</span>
     </div>
@@ -533,8 +528,6 @@ async function loadChampions() {
   try {
     const data = await requestJson("/api/champions");
     championCatalog = data.champions;
-    championPatch = data.patch;
-    preloadChampionPortraits(championCatalog);
     championIds.clear();
     const options = data.champions.map((champion) => {
       championIds.set(champion.name.toLocaleLowerCase(), champion.id);
