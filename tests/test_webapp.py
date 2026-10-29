@@ -3,7 +3,7 @@ import threading
 import unittest
 from http.server import ThreadingHTTPServer
 from urllib.error import HTTPError
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 from unittest.mock import patch
 
 from pickmychamp.webapp import PickMyChampHandler, counter_payload
@@ -115,6 +115,44 @@ class WebAppTests(unittest.TestCase):
                 with urlopen(f"{url}/api/champions", timeout=3) as response:
                     catalog = json.loads(response.read().decode("utf-8"))
             self.assertEqual(catalog["champions"][0]["name"], "Vayne")
+
+            request = Request(
+                f"{url}/api/playbook",
+                data=json.dumps(
+                    {
+                        "player_role": "adc",
+                        "allies": {
+                            "top": "Malphite",
+                            "jungle": "Amumu",
+                            "adc": "Jinx",
+                        },
+                        "enemies": {
+                            "mid": "Xerath",
+                            "adc": "Varus",
+                        },
+                    }
+                ).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urlopen(request, timeout=3) as response:
+                playbook = json.loads(response.read().decode("utf-8"))
+            self.assertEqual(playbook["allied_pattern"]["id"], "engage")
+            self.assertEqual(playbook["your_champion"], "Jinx")
+
+            invalid_request = Request(
+                f"{url}/api/playbook",
+                data=json.dumps(
+                    {"player_role": "bot", "allies": {"mid": "Ahri"},
+                     "enemies": {"mid": "Zed"}}
+                ).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with self.assertRaises(HTTPError) as error:
+                urlopen(invalid_request, timeout=3)
+            self.assertEqual(error.exception.code, 400)
+            error.exception.close()
         finally:
             server.shutdown()
             server.server_close()

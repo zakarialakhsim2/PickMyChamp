@@ -853,6 +853,55 @@ body::before { display: none; }
   .profile-actions { align-items: flex-start; flex-direction: column; gap: 13px; }
 }
 
+.playbook-panel { margin-top: 30px; padding: 23px 25px 20px; }
+.playbook-tag { border: 1px solid #3b453e; border-radius: 20px; color: #a7cfb6; font-size: 8px; letter-spacing: .8px; padding: 7px 10px; white-space: nowrap; }
+.playbook-intro { color: #999baa; font-size: 12px; line-height: 1.6; margin: 18px 0 20px; max-width: 700px; }
+.draft-teams { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.draft-team { background: #141720; border: 1px solid #2e313c; border-radius: 8px; margin: 0; min-width: 0; padding: 14px; }
+.draft-team legend { color: var(--gold); font-size: 9px; font-weight: 700; letter-spacing: 1.1px; padding: 0 7px; }
+.draft-team-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.draft-team .field>span { font-size: 8px; }
+.draft-team .field select { font-size: 11px; height: 39px; padding-left: 9px; }
+.playbook-actions { align-items: center; display: flex; gap: 15px; justify-content: space-between; margin-top: 17px; }
+.playbook-actions p { color: #828594; font-size: 10px; line-height: 1.5; margin: 0; }
+.playbook-actions button:disabled { cursor: wait; filter: saturate(.5); opacity: .7; }
+.playbook-results { margin-top: 28px; }
+.playbook-results-heading { margin-top: 0; }
+.coverage-pill { background: #1d2422; border: 1px solid #35443e; border-radius: 20px; color: #b7d5c3; font-size: 9px; letter-spacing: .45px; padding: 8px 11px; }
+.playbook-card-grid { display: grid; gap: 13px; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); }
+.playbook-card { background: linear-gradient(130deg, #1a1e26, #171a22); border: 1px solid #30333d; border-radius: 9px; min-width: 0; padding: 19px; }
+.opponent-plan-card { border-color: #3b3234; }
+.playbook-card-kicker { color: var(--gold); font-size: 8px; font-weight: 700; letter-spacing: 1.15px; }
+.playbook-card h3 { font: 600 18px 'Space Grotesk', sans-serif; margin: 10px 0 8px; }
+.playbook-card>p { color: #c1c2cb; font-size: 12px; line-height: 1.7; margin: 0; }
+.playbook-detail { border-top: 1px solid #2d303a; margin-top: 14px; padding-top: 11px; }
+.playbook-detail[hidden] { display: none; }
+.playbook-detail>b { color: #8e91a0; font-size: 8px; letter-spacing: .9px; }
+.playbook-detail p { color: #d3d1d7; font-size: 11px; line-height: 1.6; margin: 5px 0 0; }
+.role-jobs-card { margin-top: 13px; }
+.role-jobs-list { display: grid; gap: 10px 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); list-style: none; margin: 14px 0 0; padding: 0; }
+.role-jobs-list li { border-top: 1px solid #2d303a; padding-top: 9px; }
+.role-jobs-list strong { color: #e3d3ad; display: block; font-size: 10px; margin-bottom: 4px; }
+.role-jobs-list span { color: #b6b7c1; display: block; font-size: 10px; line-height: 1.55; }
+.playbook-caveat { color: #858796; font-size: 10px; line-height: 1.7; margin: 12px 2px 0; }
+
+@media (max-width: 900px) {
+  .playbook-panel { padding: 19px; }
+  .draft-teams { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 650px) {
+  .playbook-panel { padding: 17px 15px; }
+  .playbook-tag { font-size: 7px; padding: 6px 7px; }
+  .draft-team-grid { gap: 9px; }
+  .playbook-actions { align-items: stretch; flex-direction: column; }
+  .playbook-actions .primary-button { width: 100%; }
+  .playbook-results-heading { align-items: flex-start; }
+  .coverage-pill { font-size: 8px; }
+  .playbook-card-grid, .role-jobs-list { grid-template-columns: 1fr; }
+  .playbook-card { padding: 15px; }
+}
+
 .hero-rank { display: block; }
 @media (max-width: 650px) {
   .sidebar {

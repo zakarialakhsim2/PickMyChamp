@@ -1,6 +1,10 @@
 const $ = (selector) => document.querySelector(selector);
 let lookupSequence = 0;
+let playbookSequence = 0;
+let playbookWasGenerated = false;
+let syncedEnemyLanePick = null;
 const championIds = new Map();
+const championPortraitPreloads = new Set();
 let championCatalog = [];
 let championPatch = "";
 let activeChampionOption = -1;
@@ -46,6 +50,17 @@ function updateEnemyStage() {
 
 function championPortraitUrl(championId) {
   return `https://ddragon.leagueoflegends.com/cdn/${championPatch}/img/champion/${encodeURIComponent(championId)}.png`;
+}
+
+function preloadChampionPortraits(champions) {
+  champions.forEach((champion) => {
+    const image = new Image();
+    const release = () => championPortraitPreloads.delete(image);
+    championPortraitPreloads.add(image);
+    image.addEventListener("load", release, { once: true });
+    image.addEventListener("error", release, { once: true });
+    image.src = championPortraitUrl(champion.id);
+  });
 }
 
 function renderChampionOptions(query = "") {
@@ -144,7 +159,149 @@ function selectChampion(champion) {
   updateChampionPicker(champion);
   closeChampionPicker();
   updateEnemyStage();
+  syncEnemyLanePick();
   loadCounter(new Event("submit"));
+  if (playbookWasGenerated) loadPlaybook();
+}
+
+function populateDraftSlots() {
+  document.querySelectorAll(".draft-slot").forEach((select) => {
+    const selected = select.value;
+    const options = [
+      new Option("Not revealed", ""),
+      ...championCatalog.map((champion) => new Option(champion.name, champion.name)),
+    ];
+    select.replaceChildren(...options);
+    if (championCatalog.some((champion) => champion.name === selected)) {
+      select.value = selected;
+    }
+  });
+}
+
+function syncEnemyLanePick() {
+  const role = $("#draft-role").value;
+  const enemyChampion = $("#enemy-champion").value;
+  if (syncedEnemyLanePick && syncedEnemyLanePick.role !== role) {
+    const previousLanePick = document.querySelector(
+      `.draft-slot[data-team="enemies"][data-role="${syncedEnemyLanePick.role}"]`
+    );
+    if (previousLanePick && previousLanePick.value === syncedEnemyLanePick.champion) {
+      previousLanePick.value = "";
+    }
+  }
+  const lanePick = document.querySelector(
+    `.draft-slot[data-team="enemies"][data-role="${role}"]`
+  );
+  if (lanePick) lanePick.value = enemyChampion;
+  syncedEnemyLanePick = enemyChampion
+    ? { role, champion: enemyChampion }
+    : null;
+}
+
+function collectDraftTeam(team) {
+  const picks = {};
+  document.querySelectorAll(`.draft-slot[data-team="${team}"]`).forEach((select) => {
+    if (select.value) picks[select.dataset.role] = select.value;
+  });
+  return picks;
+}
+
+function appendRoleJob(list, item) {
+  const row = document.createElement("li");
+  const title = document.createElement("strong");
+  const job = document.createElement("span");
+  title.textContent = `${item.label} · ${item.champion}`;
+  job.textContent = item.job;
+  row.append(title, job);
+  list.append(row);
+}
+
+function setPlaybookDetail(id, value) {
+  const element = $(`#${id}`);
+  element.textContent = value || "";
+  element.closest(".playbook-detail").hidden = !value;
+}
+
+function renderPlaybook(playbook) {
+  const allied = playbook.allied_coverage;
+  const enemy = playbook.enemy_coverage;
+  $("#playbook-allied-pattern").textContent = playbook.allied_pattern.label;
+  $("#playbook-win-condition").textContent = playbook.allied_pattern.win_condition;
+  $("#playbook-your-job").textContent = playbook.your_champion
+    ? `${playbook.your_champion} (${playbook.your_role}): ${playbook.your_job}`
+    : `${playbook.your_role}: ${playbook.your_job}`;
+  setPlaybookDetail("playbook-avoid", playbook.allied_pattern.avoid);
+  setPlaybookDetail("playbook-fallback", playbook.allied_pattern.fallback);
+  const evidence = playbook.evidence.map(
+    (item) => `${item.role.toUpperCase()}: ${item.champion}`
+  ).join(" · ");
+  setPlaybookDetail(
+    "playbook-evidence",
+    evidence || "No single supported signal stands out for this draft."
+  );
+  $("#playbook-enemy-pattern").textContent = playbook.enemy_pattern.label;
+  $("#playbook-enemy-read").textContent = playbook.enemy_read;
+  $("#playbook-counter-plan").textContent = playbook.counter_plan;
+  $("#playbook-coverage").textContent =
+    `ALLIES ${allied.selected}/5 · ${allied.profiled} PROFILED | ` +
+    `OPPONENTS ${enemy.selected}/5 · ${enemy.profiled} PROFILED`;
+  $("#playbook-team-coverage").textContent =
+    `Your team: ${allied.selected} of 5 roles filled; ${allied.profiled} of those picks have a curated profile. ` +
+    `Opponents: ${enemy.selected} of 5 roles filled; ${enemy.profiled} profiled.`;
+
+  const roleJobs = $("#playbook-role-jobs");
+  roleJobs.replaceChildren();
+  playbook.role_jobs.forEach((item) => appendRoleJob(roleJobs, item));
+  if (!playbook.role_jobs.length) {
+    const empty = document.createElement("li");
+    empty.textContent = "Role assignments will appear when a supported team pattern is detected.";
+    roleJobs.append(empty);
+  }
+  $("#playbook-notes").textContent = playbook.notes.join(" ");
+  $("#playbook-results").hidden = false;
+}
+
+async function loadPlaybook(event) {
+  if (event) event.preventDefault();
+  const sequence = ++playbookSequence;
+  const error = $("#playbook-error");
+  const results = $("#playbook-results");
+  const button = $("#playbook-form button[type='submit']");
+  const allies = collectDraftTeam("allies");
+  const enemies = collectDraftTeam("enemies");
+  error.hidden = true;
+  results.hidden = true;
+  if (!Object.keys(allies).length || !Object.keys(enemies).length) {
+    error.textContent = "Add at least one champion to each team.";
+    error.hidden = false;
+    return;
+  }
+
+  button.disabled = true;
+  button.setAttribute("aria-busy", "true");
+  try {
+    const playbook = await requestJson("/api/playbook", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        allies,
+        enemies,
+        player_role: $("#draft-role").value,
+      }),
+    });
+    if (sequence !== playbookSequence) return;
+    renderPlaybook(playbook);
+    playbookWasGenerated = true;
+  } catch (requestError) {
+    if (sequence !== playbookSequence) return;
+    error.textContent = requestError.message;
+    error.hidden = false;
+  } finally {
+    if (sequence === playbookSequence) {
+      button.disabled = false;
+      button.removeAttribute("aria-busy");
+    }
+  }
 }
 
 function setupChampionPicker() {
@@ -377,6 +534,7 @@ async function loadChampions() {
     const data = await requestJson("/api/champions");
     championCatalog = data.champions;
     championPatch = data.patch;
+    preloadChampionPortraits(championCatalog);
     championIds.clear();
     const options = data.champions.map((champion) => {
       championIds.set(champion.name.toLocaleLowerCase(), champion.id);
@@ -391,12 +549,14 @@ async function loadChampions() {
       (champion) => champion.name.toLocaleLowerCase() === "vayne"
     );
     if (vayne) select.value = vayne.name;
+    populateDraftSlots();
     select.disabled = false;
     $("#champion-search").disabled = false;
     $("#champion-picker-toggle").disabled = false;
     $("#patch-label").textContent = data.patch;
     updateChampionPicker(vayne || data.champions[0]);
     updateEnemyStage();
+    syncEnemyLanePick();
     await loadCounter(new Event("submit"));
   } catch (error) {
     $("#error-message").textContent = error.message;
@@ -450,10 +610,22 @@ $("#enemy-champion").addEventListener("change", () => {
   const champion = championCatalog.find((entry) => entry.name === $("#enemy-champion").value);
   if (champion) updateChampionPicker(champion);
   updateEnemyStage();
+  syncEnemyLanePick();
   loadCounter(new Event("submit"));
+  if (playbookWasGenerated) loadPlaybook();
 });
-$("#draft-role").addEventListener("change", () => loadCounter(new Event("submit")));
+$("#draft-role").addEventListener("change", () => {
+  syncEnemyLanePick();
+  loadCounter(new Event("submit"));
+  if (playbookWasGenerated) loadPlaybook();
+});
 $("#profile-form").addEventListener("submit", saveProfile);
+$("#playbook-form").addEventListener("submit", loadPlaybook);
+document.querySelectorAll(".draft-slot").forEach((select) => {
+  select.addEventListener("change", () => {
+    if (playbookWasGenerated) loadPlaybook();
+  });
+});
 $("#primary-role").addEventListener("change", updateProfileRoleBadge);
 updateProfileRoleBadge();
 setupChampionPicker();

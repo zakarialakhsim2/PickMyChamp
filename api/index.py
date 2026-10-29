@@ -4,6 +4,7 @@ from flask import Flask, jsonify, request, send_from_directory
 
 from pickmychamp.config import AccountConfig, load_config, save_config
 from pickmychamp.counter_guides import champion_catalog
+from pickmychamp.draft_playbook import generate_playbook
 from pickmychamp.webapp import counter_payload, profile_payload
 from pickmychamp.riot_api import PLATFORM_ROUTES
 from pickmychamp.recommendations import normalize_role
@@ -34,6 +35,22 @@ def counter():
         return jsonify(error=str(exc)), 400
     except RuntimeError as exc:
         return jsonify(error=str(exc)), 502
+
+
+@app.post("/api/playbook")
+def playbook():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify(error="Le corps JSON doit être un objet."), 400
+    try:
+        result = generate_playbook(
+            payload.get("allies"),
+            payload.get("enemies"),
+            payload.get("player_role"),
+        )
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 400
+    return jsonify(result)
 
 
 @app.get("/api/profile")

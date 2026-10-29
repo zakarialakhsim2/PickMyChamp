@@ -36,6 +36,12 @@ public counter page for that champion. Rune, item, and summoner-spell names
 use English. The app/profile works without a Riot API key; the key is only
 needed for personal Riot match-history features in the CLI.
 
+The web draft assistant also includes a Draft-to-Playbook beta. Enter revealed
+champions by role for both teams to get a cautious, rules-based team briefing.
+Its curated strategy profiles are limited, so the briefing shows its evidence
+and coverage and may report that no reliable pattern is available. It is not a
+win-rate prediction or a substitute for matchup statistics.
+
 The original commands remain available, for example
 `python main.py history --count 50` or `python main.py counter --enemy Vayne
 --role adc`. `python main.py demo` shows synthetic examples that are not real

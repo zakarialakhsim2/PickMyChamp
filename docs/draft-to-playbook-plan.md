@@ -1,6 +1,6 @@
 # Product plan: Draft-to-Playbook
 
-**Status:** Planning only
+**Status:** MVP prototype implemented; player validation and broader profile coverage remain.
 **Purpose:** Candidate product direction for PickMyChamp; implementation has not started.
 
 ## Product idea
@@ -91,6 +91,23 @@ These are candidate categories, not a commitment to force every draft into exact
 5. **Patch awareness:** Recheck champion abilities and data assumptions as the game changes.
 6. **Fast to use:** The player should be able to understand the briefing before loading into the game.
 
+## Current implementation status
+
+The web MVP now includes a manual five-role board for both teams and a
+`POST /api/playbook` endpoint. It can produce conservative signals for
+coordinated engage, poke, pick, protect-the-scaling-carry, and scaling patterns
+from a limited curated champion profile set. The briefing includes the
+selected player's role job, role responsibilities, opposing-team read,
+supporting picks, profile coverage, and explicit limitations. The existing
+counter-pick flow remains available, and its enemy pick is copied into the
+matching opponent lane slot.
+
+This is a first vertical slice, not a finished strategy product. Many
+champions are not yet profiled; split-push and other patterns are not
+implemented; there is no share link or saved draft; and the rules have not yet
+been validated with players. Unknown or mixed drafts intentionally receive no
+invented win condition.
+
 ## Implementation approach to evaluate
 
 Begin with structured, deterministic rules or curated templates for a limited set of draft patterns. Keep the strategy logic separate from the presentation so the team can test whether the recommendations are correct and useful. An LLM may later help phrase validated facts, but it should not invent champion capabilities, matchup evidence, or strategic claims.
@@ -131,13 +148,13 @@ Suggested prototype success criteria to confirm with testers:
 | Full-draft entry adds too much friction | Prototype the input flow before expanding the strategy engine; reuse the current champion and lane selection patterns where possible. |
 | The plan promises more than the data supports | Keep confidence visible and prefer no recommendation over fabricated certainty. |
 
-## First working session
+## Next working session
 
-1. Review the current draft assistant and decide where full-team input belongs.
-2. Agree on the exact playbook card and the MVP's supported draft patterns.
-3. Create a small set of example drafts and review the proposed output with players.
-4. Choose the initial strategy-data source and define how recommendations are tested.
-5. Implement only after the concept and quality bar are agreed.
+1. Review the existing output against realistic, contrasting drafts with League players.
+2. Record incorrect, vague, or missing advice and expand curated profiles only where evidence supports it.
+3. Agree on a quality bar for when to show a primary plan versus an uncertain or mixed result.
+4. Evaluate a copy/share card after the core playbook is useful and trusted.
+5. Recheck patch and competitor assumptions before making comparative product claims.
 
 ## Competitive positioning to validate
 

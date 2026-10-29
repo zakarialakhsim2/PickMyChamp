@@ -53,6 +53,35 @@ class VercelApiFunctionalTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["picks"][0]["champion"], "Naafiri")
 
+    def test_playbook_is_available_through_vercel_api(self):
+        body = {
+            "allies": {"top": "Malphite", "jungle": "Amumu"},
+            "enemies": {"mid": "Xerath"},
+            "player_role": "top",
+        }
+        expected = {
+            "allied_pattern": {"id": "engage", "label": "Coordinated engage"}
+        }
+        with patch("api.index.generate_playbook", return_value=expected) as generate:
+            response = self.client.post("/api/playbook", json=body)
+
+        generate.assert_called_once_with(
+            body["allies"],
+            body["enemies"],
+            body["player_role"],
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), expected)
+
+    def test_playbook_rejects_invalid_vercel_request(self):
+        response = self.client.post(
+            "/api/playbook",
+            json={"allies": {}, "enemies": {"mid": "Zed"}, "player_role": "mid"},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("at least one champion", response.get_json()["error"])
+
     def test_champion_catalog_failure_is_explicit(self):
         with patch("api.index.champion_catalog", side_effect=RuntimeError("upstream unavailable")):
             response = self.client.get("/api/champions")

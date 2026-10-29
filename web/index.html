@@ -99,6 +99,72 @@
           <div id="recommendation-list" class="recommendation-list"></div>
           <div class="disclaimer"><span>ⓘ</span><p><b>Matchup source</b> — Public matchup statistics and sample sizes come from U.GG. Build details are shown only when available; otherwise use the linked English build guide.</p></div>
         </section>
+
+        <section class="playbook-panel panel">
+          <div class="panel-heading">
+            <div><span class="section-kicker">03 / DRAFT-TO-PLAYBOOK</span><h2>How does your team win?</h2></div>
+            <span class="playbook-tag">RULE-BASED · BETA</span>
+          </div>
+          <p class="playbook-intro">Add the picks already revealed. PickMyChamp will show a cautious team plan when its curated draft signals support one.</p>
+          <form id="playbook-form" novalidate>
+            <div class="draft-teams">
+              <fieldset class="draft-team">
+                <legend>YOUR TEAM</legend>
+                <div class="draft-team-grid">
+                  <label class="field"><span>TOP</span><select class="draft-slot" data-team="allies" data-role="top" aria-label="Your team's top champion"><option value="">Not revealed</option></select></label>
+                  <label class="field"><span>JUNGLE</span><select class="draft-slot" data-team="allies" data-role="jungle" aria-label="Your team's jungle champion"><option value="">Not revealed</option></select></label>
+                  <label class="field"><span>MID</span><select class="draft-slot" data-team="allies" data-role="mid" aria-label="Your team's mid champion"><option value="">Not revealed</option></select></label>
+                  <label class="field"><span>ADC</span><select class="draft-slot" data-team="allies" data-role="adc" aria-label="Your team's ADC champion"><option value="">Not revealed</option></select></label>
+                  <label class="field"><span>SUPPORT</span><select class="draft-slot" data-team="allies" data-role="support" aria-label="Your team's support champion"><option value="">Not revealed</option></select></label>
+                </div>
+              </fieldset>
+              <fieldset class="draft-team opponent-team">
+                <legend>OPPONENT TEAM</legend>
+                <div class="draft-team-grid">
+                  <label class="field"><span>TOP</span><select class="draft-slot" data-team="enemies" data-role="top" aria-label="Opponent's top champion"><option value="">Not revealed</option></select></label>
+                  <label class="field"><span>JUNGLE</span><select class="draft-slot" data-team="enemies" data-role="jungle" aria-label="Opponent's jungle champion"><option value="">Not revealed</option></select></label>
+                  <label class="field"><span>MID</span><select class="draft-slot" data-team="enemies" data-role="mid" aria-label="Opponent's mid champion"><option value="">Not revealed</option></select></label>
+                  <label class="field"><span>ADC</span><select class="draft-slot" data-team="enemies" data-role="adc" aria-label="Opponent's ADC champion"><option value="">Not revealed</option></select></label>
+                  <label class="field"><span>SUPPORT</span><select class="draft-slot" data-team="enemies" data-role="support" aria-label="Opponent's support champion"><option value="">Not revealed</option></select></label>
+                </div>
+              </fieldset>
+            </div>
+            <div class="playbook-actions">
+              <p>Partial drafts are welcome; missing or unprofiled picks lower the certainty.</p>
+              <button class="primary-button" type="submit"><span>Build team playbook</span><b>→</b></button>
+            </div>
+          </form>
+        </section>
+        <div id="playbook-error" class="error-banner" role="alert" hidden></div>
+        <section id="playbook-results" class="playbook-results" aria-live="polite" hidden>
+          <div class="results-heading playbook-results-heading">
+            <div><span class="section-kicker">YOUR DRAFT BRIEFING</span><h2>A plan for this draft</h2></div>
+            <span id="playbook-coverage" class="coverage-pill"></span>
+          </div>
+          <div class="playbook-card-grid">
+            <article class="playbook-card">
+              <span class="playbook-card-kicker">YOUR TEAM</span>
+              <h3 id="playbook-allied-pattern"></h3>
+              <p id="playbook-win-condition"></p>
+              <div class="playbook-detail"><b>YOUR JOB</b><p id="playbook-your-job"></p></div>
+              <div class="playbook-detail"><b>AVOID</b><p id="playbook-avoid"></p></div>
+              <div class="playbook-detail"><b>IF THE PLAN IS UNSAFE</b><p id="playbook-fallback"></p></div>
+              <div class="playbook-detail"><b>SUPPORTING PICKS</b><p id="playbook-evidence"></p></div>
+            </article>
+            <article class="playbook-card opponent-plan-card">
+              <span class="playbook-card-kicker">OPPONENT READ</span>
+              <h3 id="playbook-enemy-pattern"></h3>
+              <p id="playbook-enemy-read"></p>
+              <div class="playbook-detail"><b>OUR RESPONSE</b><p id="playbook-counter-plan"></p></div>
+              <div class="playbook-detail"><b>DATA COVERAGE</b><p id="playbook-team-coverage"></p></div>
+            </article>
+          </div>
+          <article class="playbook-card role-jobs-card">
+            <span class="playbook-card-kicker">TEAM RESPONSIBILITIES</span>
+            <ul id="playbook-role-jobs" class="role-jobs-list"></ul>
+          </article>
+          <p id="playbook-notes" class="playbook-caveat"></p>
+        </section>
       </section>
 
       <section id="profile-page" class="page" hidden>

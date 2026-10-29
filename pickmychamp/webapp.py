@@ -14,6 +14,7 @@ from pickmychamp.counter_guides import (
     render_runes,
 )
 from pickmychamp.counter_source import build_url, matchup_counters
+from pickmychamp.draft_playbook import generate_playbook
 from pickmychamp.recommendations import normalize_role
 from pickmychamp.riot_api import PLATFORM_ROUTES
 
@@ -212,7 +213,21 @@ class PickMyChampHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_POST(self) -> None:
-        if urlparse(self.path).path != "/api/profile":
+        path = urlparse(self.path).path
+        if path == "/api/playbook":
+            try:
+                payload = self._read_json()
+                playbook = generate_playbook(
+                    payload.get("allies"),
+                    payload.get("enemies"),
+                    payload.get("player_role"),
+                )
+            except ValueError as exc:
+                self._json(400, {"error": str(exc)})
+                return
+            self._json(200, playbook)
+            return
+        if path != "/api/profile":
             self.send_error(404)
             return
         try:
